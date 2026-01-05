@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สรุปข้อมูลแปลงที่ดินตามเขต</title>
+    <title>สรุปข้อมูลแปลงที่ดินตามโซนและเขต</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,8 +11,8 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-landmark"></i> สรุปข้อมูลแปลงที่ดินตามเขต</h1>
-            <p class="subtitle">อัปโหลดไฟล์ CSV เพื่อสรุปข้อมูลแปลงที่ดินและพื้นที่รวมตามเขต</p>
+            <h1><i class="fas fa-map-marked-alt"></i> สรุปข้อมูลแปลงที่ดินตามโซนและเขต</h1>
+            <p class="subtitle">อัปโหลดไฟล์ CSV เพื่อสรุปข้อมูลแปลงที่ดินตามโซนและเขต</p>
         </header>
 
         <main>
@@ -29,10 +29,11 @@
                     
                     <div class="requirements">
                         <h4><i class="fas fa-info-circle"></i> รูปแบบข้อมูลที่ต้องการ</h4>
-                        <p>ไฟล์ CSV ควรมีคอลัมน์ต่อไปนี้:</p>
+                        <p>ไฟล์ CSV ควรมีคอลัมน์ต่อไปนี้ (ระบบจะพยายามตรวจจับชื่อคอลัมน์อัตโนมัติ):</p>
                         <ul>
-                            <li><strong>เขต</strong> - รหัสหรือชื่อเขต</li>
-                            <li><strong>แปลง</strong> - หมายเลขแปลง</li>
+                            <li><strong>โซน</strong> - รหัสหรือชื่อโซน (Zone)</li>
+                            <li><strong>เขต</strong> - รหัสหรือชื่อเขต (District)</li>
+                            <li><strong>แปลง</strong> - หมายเลขแปลง (Plot)</li>
                             <li><strong>ไร่</strong> - พื้นที่ (หน่วยไร่)</li>
                         </ul>
                         <p>หรือดาวน์โหลดข้อมูลตัวอย่าง: <a href="sample_data.csv" download="sample_data.csv">sample_data.csv</a></p>
@@ -43,7 +44,7 @@
             <!-- ส่วนแสดงผลรายงาน -->
             <section class="report-section" id="report-section" style="display: none;">
                 <div class="report-header">
-                    <h2><i class="fas fa-chart-pie"></i> รายงานสรุปข้อมูลแปลงที่ดินตามเขต</h2>
+                    <h2><i class="fas fa-chart-pie"></i> รายงานสรุปข้อมูลแปลงที่ดิน</h2>
                     <div class="controls">
                         <button id="download-summary-btn" class="btn btn-primary">
                             <i class="fas fa-download"></i> ดาวน์โหลดสรุป
@@ -59,6 +60,15 @@
 
                 <!-- สถิติสรุป -->
                 <div class="summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-globe-asia"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-zones">0</div>
+                            <div class="stat-label">จำนวนโซนทั้งหมด</div>
+                        </div>
+                    </div>
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-map-marker-alt"></i>
@@ -86,73 +96,135 @@
                             <div class="stat-label">พื้นที่รวม (ไร่)</div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-calculator"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="avg-area-per-plot">0</div>
-                            <div class="stat-label">พื้นที่เฉลี่ยต่อแปลง (ไร่)</div>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- รายงานสรุปตามเขต -->
-                <div class="summary-table-section">
-                    <h3><i class="fas fa-table"></i> สรุปข้อมูลตามเขต</h3>
+                <!-- แท็บรายงาน -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="zone-summary">สรุปตามโซน</button>
+                    <button class="tab" data-tab="district-summary">สรุปตามเขต</button>
+                    <button class="tab" data-tab="zone-district-summary">สรุปโซน-เขต</button>
+                    <button class="tab" data-tab="details">รายละเอียด</button>
+                </div>
+
+                <!-- รายงานสรุปตามโซน -->
+                <div id="zone-summary" class="tab-content active">
+                    <h3><i class="fas fa-globe"></i> สรุปข้อมูลตามโซน</h3>
+                    <p class="tab-description">แสดงจำนวนแปลงและพื้นที่รวมในแต่ละโซน</p>
+                    
                     <div class="table-container">
-                        <table id="district-summary-table">
+                        <table id="zone-summary-table">
                             <thead>
                                 <tr>
                                     <th rowspan="2">ลำดับ</th>
-                                    <th rowspan="2">เขต</th>
-                                    <th colspan="3">ข้อมูลแปลงที่ดิน</th>
-                                    <th rowspan="2">ดำเนินการ</th>
+                                    <th rowspan="2">โซน</th>
+                                    <th colspan="2">ข้อมูลแปลงที่ดิน</th>
+                                    <th rowspan="2">สรุปตามเขต</th>
                                 </tr>
                                 <tr>
                                     <th>จำนวนแปลง</th>
                                     <th>พื้นที่รวม (ไร่)</th>
-                                    <th>พื้นที่เฉลี่ยต่อแปลง (ไร่)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
                             </tbody>
                             <tfoot>
-                                <tr id="summary-total">
+                                <tr id="zone-summary-total">
                                     <!-- ข้อมูลรวมจะถูกเพิ่มโดย JavaScript -->
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
+                    
+                    <div class="chart-container-small">
+                        <canvas id="zone-chart"></canvas>
+                    </div>
                 </div>
 
-                <!-- กราฟสรุปข้อมูล -->
-                <div class="chart-section">
-                    <h3><i class="fas fa-chart-bar"></i> กราฟแสดงข้อมูลตามเขต</h3>
-                    <div class="chart-container">
+                <!-- รายงานสรุปตามเขต -->
+                <div id="district-summary" class="tab-content">
+                    <h3><i class="fas fa-map"></i> สรุปข้อมูลตามเขต</h3>
+                    <p class="tab-description">แสดงจำนวนแปลงและพื้นที่รวมในแต่ละเขต</p>
+                    
+                    <div class="table-container">
+                        <table id="district-summary-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">ลำดับ</th>
+                                    <th rowspan="2">เขต</th>
+                                    <th colspan="2">ข้อมูลแปลงที่ดิน</th>
+                                    <th rowspan="2">พื้นที่เฉลี่ยต่อแปลง (ไร่)</th>
+                                    <th rowspan="2">ดูรายละเอียด</th>
+                                </tr>
+                                <tr>
+                                    <th>จำนวนแปลง</th>
+                                    <th>พื้นที่รวม (ไร่)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+                            </tbody>
+                            <tfoot>
+                                <tr id="district-summary-total">
+                                    <!-- ข้อมูลรวมจะถูกเพิ่มโดย JavaScript -->
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="chart-container-small">
                         <canvas id="district-chart"></canvas>
                     </div>
-                    <div class="chart-legend" id="chart-legend">
-                        <!-- ตำแหน่งสำหรับคำอธิบายกราฟ -->
+                </div>
+
+                <!-- รายงานสรุปตามโซนและเขต -->
+                <div id="zone-district-summary" class="tab-content">
+                    <h3><i class="fas fa-th-large"></i> สรุปข้อมูลตามโซนและเขต</h3>
+                    <p class="tab-description">แสดงรายละเอียดข้อมูลแยกตามโซนและเขต</p>
+                    
+                    <div class="table-container">
+                        <table id="zone-district-summary-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">ลำดับ</th>
+                                    <th rowspan="2">โซน</th>
+                                    <th rowspan="2">เขต</th>
+                                    <th colspan="2">ข้อมูลแปลงที่ดิน</th>
+                                    <th rowspan="2">พื้นที่เฉลี่ยต่อแปลง (ไร่)</th>
+                                </tr>
+                                <tr>
+                                    <th>จำนวนแปลง</th>
+                                    <th>พื้นที่รวม (ไร่)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- ตารางรายละเอียดข้อมูล -->
-                <div class="details-section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-list"></i> รายละเอียดข้อมูลทั้งหมด</h3>
-                        <div class="details-controls">
-                            <div class="filter-group">
-                                <label for="district-filter"><i class="fas fa-filter"></i> กรองตามเขต:</label>
-                                <select id="district-filter">
-                                    <option value="all">แสดงทั้งหมด</option>
-                                </select>
-                            </div>
-                            <div class="search-group">
-                                <input type="text" id="search-input" placeholder="ค้นหาแปลงหรือข้อมูล...">
-                                <button id="search-btn"><i class="fas fa-search"></i></button>
-                            </div>
+                <!-- รายงานรายละเอียดข้อมูล -->
+                <div id="details" class="tab-content">
+                    <h3><i class="fas fa-list"></i> รายละเอียดข้อมูลทั้งหมด</h3>
+                    <p class="tab-description">แสดงข้อมูลดิบทั้งหมด พร้อมระบบกรองและค้นหา</p>
+                    
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label for="zone-filter"><i class="fas fa-filter"></i> กรองตามโซน:</label>
+                            <select id="zone-filter">
+                                <option value="all">แสดงทั้งหมด</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="district-filter"><i class="fas fa-filter"></i> กรองตามเขต:</label>
+                            <select id="district-filter">
+                                <option value="all">แสดงทั้งหมด</option>
+                            </select>
+                        </div>
+                        <div class="search-group">
+                            <input type="text" id="search-input" placeholder="ค้นหาแปลงหรือข้อมูล...">
+                            <button id="search-btn"><i class="fas fa-search"></i></button>
                         </div>
                     </div>
                     
@@ -179,7 +251,7 @@
                             <label for="page-size">แสดง:</label>
                             <select id="page-size">
                                 <option value="10">10 แถว</option>
-                                <option value="25">25 แถว</option>
+                                <option value="25" selected>25 แถว</option>
                                 <option value="50">50 แถว</option>
                                 <option value="100">100 แถว</option>
                             </select>
@@ -191,7 +263,7 @@
 
         <footer>
             <p><i class="fas fa-code"></i> พัฒนาด้วย HTML, CSS และ JavaScript | สำหรับใช้งานบน GitHub Pages</p>
-            <p class="footer-note">ข้อมูลตัวอย่างจากตารางสรุปพื้นที่รวม แปลงที่ดิน จำนวนไร่</p>
+            <p class="footer-note">ระบบสรุปข้อมูลแปลงที่ดินตามโซนและเขต</p>
         </footer>
     </div>
 
