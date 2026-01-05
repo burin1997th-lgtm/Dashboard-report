@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เว็บสรุปรายงานข้อมูล CSV</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-bar"></i> เว็บสรุปรายงานข้อมูล CSV</h1>
+            <p class="subtitle">อัปโหลดไฟล์ CSV เพื่อสร้างรายงานสรุปข้อมูลรายเขต</p>
+        </header>
+
+        <main>
+            <!-- ส่วนอัปโหลดไฟล์ -->
+            <section class="upload-section">
+                <div class="upload-box">
+                    <div class="upload-area" id="drop-area">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>ลากไฟล์ CSV มาวางที่นี่</h3>
+                        <p>หรือคลิกเพื่อเลือกไฟล์จากคอมพิวเตอร์ของคุณ</p>
+                        <input type="file" id="file-input" accept=".csv">
+                        <p class="file-types">รองรับเฉพาะไฟล์ CSV (.csv)</p>
+                    </div>
+                    
+                    <div class="sample-data">
+                        <h4><i class="fas fa-download"></i> ดาวน์โหลดข้อมูลตัวอย่าง</h4>
+                        <p>สำหรับทดสอบระบบ: <a href="sample_data.csv" download="sample_data.csv">sample_data.csv</a></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ส่วนแสดงผลรายงาน -->
+            <section class="report-section" id="report-section" style="display: none;">
+                <div class="report-header">
+                    <h2><i class="fas fa-file-alt"></i> รายงานสรุปข้อมูล</h2>
+                    <div class="controls">
+                        <button id="download-btn" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> ดาวน์โหลดรายงาน
+                        </button>
+                        <button id="reset-btn" class="btn btn-outline">
+                            <i class="fas fa-redo"></i> อัปโหลดไฟล์ใหม่
+                        </button>
+                    </div>
+                </div>
+
+                <!-- แท็บรายงาน -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="district-summary">สรุปรายเขต</button>
+                    <button class="tab" data-tab="district-details">รายละเอียดข้อมูล</button>
+                </div>
+
+                <!-- รายงานสรุปเขต -->
+                <div id="district-summary" class="tab-content active">
+                    <h3><i class="fas fa-map-marked-alt"></i> รายงานสรุปข้อมูลตามเขต</h3>
+                    <div class="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-districts">0</div>
+                            <div class="stat-label">จำนวนเขตทั้งหมด</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-records">0</div>
+                            <div class="stat-label">จำนวนข้อมูลทั้งหมด</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avg-value">0</div>
+                            <div class="stat-label">ค่าเฉลี่ย (เขต)</div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="district-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>ลำดับ</th>
+                                    <th>ชื่อเขต</th>
+                                    <th>จำนวนข้อมูล</th>
+                                    <th>ผลรวม</th>
+                                    <th>ค่าเฉลี่ย</th>
+                                    <th>ค่าสูงสุด</th>
+                                    <th>ค่าต่ำสุด</th>
+                                    <th>การดำเนินการ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- รายงานรายละเอียด -->
+                <div id="district-details" class="tab-content">
+                    <h3><i class="fas fa-info-circle"></i> รายละเอียดข้อมูลทั้งหมด</h3>
+                    <div class="filter-controls">
+                        <div class="filter-group">
+                            <label for="district-filter"><i class="fas fa-filter"></i> กรองตามเขต:</label>
+                            <select id="district-filter">
+                                <option value="all">ทั้งหมด</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="search-input"><i class="fas fa-search"></i> ค้นหา:</label>
+                            <input type="text" id="search-input" placeholder="พิมพ์คำค้นหา...">
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="details-table">
+                            <thead>
+                                <!-- หัวตารางจะถูกเพิ่มโดย JavaScript -->
+                            </thead>
+                            <tbody>
+                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination">
+                        <button id="prev-page" class="page-btn" disabled><i class="fas fa-chevron-left"></i> ก่อนหน้า</button>
+                        <span id="page-info">หน้า 1 จาก 1</span>
+                        <button id="next-page" class="page-btn" disabled>ถัดไป <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>สร้างด้วย HTML, CSS และ JavaScript | สำหรับใช้งานบน GitHub Pages</p>
+        </footer>
+    </div>
+
+    <!-- โหลดไฟล์ JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
