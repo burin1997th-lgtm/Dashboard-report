@@ -8,191 +8,368 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #2c786c;
-            --secondary-color: #004445;
-            --light-color: #f8f9fa;
-            --dark-color: #333;
+            --primary-blue: #87CEEB;      /* Sky Blue */
+            --light-blue: #E0F7FF;         /* Very Light Blue */
+            --medium-blue: #5DADE2;        /* Soft Blue */
+            --dark-blue: #3498DB;          /* Dodger Blue */
+            --accent-blue: #AED6F1;        /* Light Pastel Blue */
+            --text-dark: #2C3E50;          /* Dark Blue Text */
+            --text-light: #7F8C8D;         /* Light Text */
+            --success-green: #A3E4D7;      /* Pastel Green */
+            --warning-orange: #FAD7A0;     /* Pastel Orange */
         }
         
         body {
-            background-color: #f5f7fa;
-            font-family: 'Sarabun', sans-serif;
-            color: var(--dark-color);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e0f7ff 100%);
+            font-family: 'Sarabun', 'Kanit', sans-serif;
+            color: var(--text-dark);
+            min-height: 100vh;
         }
         
+        .container {
+            max-width: 1200px;
+        }
+        
+        /* Header */
         .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
+            margin: 30px auto;
+            box-shadow: 0 10px 30px rgba(52, 152, 219, 0.2);
+            position: relative;
+            overflow: hidden;
         }
         
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+        
+        /* Upload Area */
         .upload-area {
-            border: 3px dashed var(--primary-color);
-            border-radius: 15px;
-            padding: 40px;
+            border: 3px dashed var(--medium-blue);
+            border-radius: 20px;
+            padding: 50px 30px;
             text-align: center;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.9);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             margin-bottom: 30px;
+            backdrop-filter: blur(10px);
         }
         
         .upload-area:hover {
-            background-color: rgba(44, 120, 108, 0.05);
-            border-color: var(--secondary-color);
+            background-color: rgba(224, 247, 255, 0.8);
+            border-color: var(--dark-blue);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.15);
         }
         
         .upload-area.dragover {
-            background-color: rgba(44, 120, 108, 0.1);
-            border-color: var(--secondary-color);
+            background-color: rgba(174, 214, 241, 0.6);
+            border-color: var(--dark-blue);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
         }
         
         .upload-icon {
-            font-size: 4rem;
-            color: var(--primary-color);
+            font-size: 4.5rem;
+            color: var(--dark-blue);
             margin-bottom: 20px;
+            transition: transform 0.3s ease;
         }
         
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
+        }
+        
+        /* Cards */
         .card {
-            border-radius: 12px;
+            border-radius: 18px;
             border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 25px rgba(135, 206, 235, 0.1);
             margin-bottom: 25px;
-            transition: transform 0.3s;
+            transition: all 0.3s ease;
+            overflow: hidden;
         }
         
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(135, 206, 235, 0.2);
         }
         
         .card-header {
-            background-color: var(--secondary-color);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--medium-blue) 100%);
             color: white;
             font-weight: 600;
-            border-radius: 12px 12px 0 0 !important;
-            padding: 15px 20px;
+            border-radius: 18px 18px 0 0 !important;
+            padding: 18px 25px;
+            font-size: 1.1rem;
+            border: none;
         }
         
+        /* Buttons */
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--medium-blue) 0%, var(--dark-blue) 100%);
+            border: none;
+            padding: 12px 30px;
             font-weight: 500;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
         }
         
         .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #2980B9 100%);
         }
         
+        .btn-outline-primary {
+            color: var(--dark-blue);
+            border-color: var(--dark-blue);
+            border-radius: 12px;
+            padding: 10px 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--dark-blue);
+            border-color: var(--dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.2);
+        }
+        
+        /* Statistics Cards */
         .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 247, 255, 0.8) 100%);
+            border-radius: 16px;
+            padding: 25px 20px;
             text-align: center;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 6px 20px rgba(135, 206, 235, 0.1);
             height: 100%;
+            border: 1px solid rgba(174, 214, 241, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(135, 206, 235, 0.2);
         }
         
         .stat-icon {
-            font-size: 2.5rem;
-            color: var(--primary-color);
+            font-size: 2.8rem;
+            color: var(--dark-blue);
             margin-bottom: 15px;
+            opacity: 0.9;
         }
         
         .stat-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            color: var(--secondary-color);
+            color: var(--text-dark);
             margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #2C3E50 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .stat-label {
-            font-size: 0.9rem;
-            color: #666;
+            font-size: 0.95rem;
+            color: var(--text-light);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
+            font-weight: 500;
         }
         
+        /* Tables */
         .table-custom {
-            border-radius: 10px;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 5px 15px rgba(135, 206, 235, 0.08);
+            background: white;
         }
         
         .table-custom thead {
-            background-color: var(--secondary-color);
-            color: white;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--primary-blue) 100%);
+            color: var(--text-dark);
         }
         
+        .table-custom th {
+            border: none;
+            padding: 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .table-custom td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(174, 214, 241, 0.3);
+        }
+        
+        .table-custom tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        .table-custom tbody tr:hover {
+            background-color: rgba(224, 247, 255, 0.4);
+            transform: scale(1.002);
+        }
+        
+        /* Column Selector */
         .column-selector {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+            background: linear-gradient(135deg, rgba(224, 247, 255, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 25px;
+            border: 1px solid rgba(135, 206, 235, 0.3);
         }
         
         .column-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 15px;
+            padding: 15px 20px;
             background: white;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 5px solid var(--primary-blue);
+            box-shadow: 0 3px 10px rgba(135, 206, 235, 0.1);
+            transition: all 0.3s ease;
         }
         
+        .column-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(135, 206, 235, 0.2);
+        }
+        
+        /* Progress Bars */
         .progress-custom {
-            height: 8px;
-            border-radius: 4px;
-            background-color: #e9ecef;
-            margin-top: 5px;
+            height: 10px;
+            border-radius: 10px;
+            background-color: rgba(174, 214, 241, 0.3);
+            margin-top: 8px;
+            overflow: hidden;
         }
         
         .progress-bar-custom {
-            background-color: var(--primary-color);
-            border-radius: 4px;
+            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
         }
         
+        /* Zone Badges */
         .zone-badge {
             font-size: 0.85rem;
-            padding: 5px 12px;
+            padding: 7px 15px;
             border-radius: 20px;
             font-weight: 500;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--primary-blue) 100%);
+            color: var(--text-dark);
+            border: none;
         }
         
+        /* File Info */
         .file-info {
-            background-color: #e9f5f3;
-            border-radius: 10px;
-            padding: 15px;
+            background: linear-gradient(135deg, rgba(163, 228, 215, 0.2) 0%, rgba(224, 247, 255, 0.3) 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 25px;
+            border: 1px solid rgba(163, 228, 215, 0.4);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 25px;
+            color: var(--text-light);
+            margin-top: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            border-top: 1px solid rgba(135, 206, 235, 0.3);
+        }
+        
+        /* Alert Messages */
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 20px;
+                margin: 20px auto;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+        }
+        
+        /* CSV Format Box */
+        .csv-format-box {
+            background: linear-gradient(135deg, rgba(250, 215, 160, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(250, 215, 160, 0.3);
             margin-top: 20px;
         }
         
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            margin-top: 40px;
+        /* Loading Animation */
+        .loading-spinner {
+            display: none;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(135, 206, 235, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--dark-blue);
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container py-4">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+        
         <!-- Header -->
         <div class="header text-center">
-            <h1><i class="bi bi-file-earmark-spreadsheet"></i> ระบบอัปโหลด CSV สรุปผลอัตโนมัติ</h1>
-            <p class="mb-0">อัปโหลดไฟล์ CSV ดึงข้อมูลสรุปผลตามคอลัมน์โดยอัตโนมัติ</p>
+            <h1 class="mb-3"><i class="bi bi-cloud-arrow-up-fill"></i> ระบบอัปโหลด CSV สรุปผลอัตโนมัติ</h1>
+            <p class="lead mb-0">อัปโหลดไฟล์ CSV ดึงข้อมูลสรุปผลตามโซนโดยอัตโนมัติ</p>
         </div>
 
         <!-- Upload Section -->
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-upload"></i> อัปโหลดไฟล์ CSV
+                <i class="bi bi-file-earmark-spreadsheet"></i> ขั้นตอนที่ 1: อัปโหลดไฟล์ CSV
             </div>
             <div class="card-body">
                 <!-- Upload Area -->
@@ -200,51 +377,110 @@
                     <div class="upload-icon">
                         <i class="bi bi-cloud-arrow-up"></i>
                     </div>
-                    <h4>ลากไฟล์ CSV มาวางที่นี่</h4>
-                    <p class="text-muted">หรือคลิกเพื่อเลือกไฟล์</p>
-                    <p class="small text-muted">รองรับไฟล์ .csv เท่านั้น (ขนาดไม่เกิน 10MB)</p>
-                    <input type="file" id="csvFileInput" accept=".csv" hidden>
-                    <button class="btn btn-primary mt-3" id="browseBtn">
-                        <i class="bi bi-folder2-open"></i> เลือกไฟล์ CSV
-                    </button>
+                    <h4 class="mb-3" style="color: var(--text-dark);">ลากไฟล์ CSV มาวางที่นี่</h4>
+                    <p class="text-muted mb-4">หรือคลิกปุ่มด้านล่างเพื่อเลือกไฟล์จากคอมพิวเตอร์</p>
+                    
+                    <div class="mb-4">
+                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                        <button class="btn btn-primary btn-lg" id="browseBtn">
+                            <i class="bi bi-folder2-open me-2"></i> เลือกไฟล์ CSV
+                        </button>
+                    </div>
+                    
+                    <div class="loading-spinner" id="loadingSpinner"></div>
+                    
+                    <p class="small text-muted mt-4">
+                        <i class="bi bi-info-circle me-1"></i>
+                        รองรับไฟล์ .csv เท่านั้น (ขนาดไม่เกิน 10MB)
+                    </p>
                 </div>
 
                 <!-- File Info -->
                 <div id="fileInfo" class="file-info" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 id="fileName">ไม่พบไฟล์</h6>
-                            <p class="mb-0 small" id="fileDetails">ขนาด: - แถว: - คอลัมน์: -</p>
+                            <h6 class="mb-1" id="fileName" style="color: var(--text-dark);">
+                                <i class="bi bi-file-earmark-text me-2"></i>ไม่พบไฟล์
+                            </h6>
+                            <p class="mb-0 small text-muted" id="fileDetails">
+                                <i class="bi bi-hdd me-1"></i>ขนาด: - 
+                                <i class="bi bi-table ms-3 me-1"></i>แถว: - 
+                                <i class="bi bi-columns ms-3 me-1"></i>คอลัมน์: -
+                            </p>
                         </div>
-                        <button class="btn btn-sm btn-outline-danger" id="removeFileBtn">
-                            <i class="bi bi-trash"></i> ลบไฟล์
-                        </button>
+                        <div>
+                            <button class="btn btn-outline-danger btn-sm" id="removeFileBtn">
+                                <i class="bi bi-trash me-1"></i> ลบไฟล์
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Column Selector (Auto-detected) -->
                 <div id="columnSelector" class="column-selector" style="display: none;">
-                    <h5><i class="bi bi-gear"></i> คอลัมน์ที่ตรวจพบอัตโนมัติ</h5>
+                    <h5 class="mb-4" style="color: var(--text-dark);">
+                        <i class="bi bi-magic me-2"></i> ขั้นตอนที่ 2: ระบบตรวจจับคอลัมน์อัตโนมัติ
+                    </h5>
                     <div id="autoDetectedColumns">
                         <!-- Auto-detected columns will appear here -->
                     </div>
-                    <div class="mt-3">
-                        <button class="btn btn-primary" id="generateReportBtn">
-                            <i class="bi bi-graph-up"></i> สรุปผลอัตโนมัติ
+                    <div class="mt-4 text-center">
+                        <button class="btn btn-primary btn-lg px-5" id="generateReportBtn">
+                            <i class="bi bi-graph-up-arrow me-2"></i> สรุปผลอัตโนมัติ
                         </button>
                     </div>
                 </div>
 
                 <!-- CSV Format Help -->
-                <div class="alert alert-info mt-4">
-                    <h6><i class="bi bi-info-circle"></i> รูปแบบไฟล์ CSV ที่แนะนำ</h6>
-                    <p class="mb-2">ไฟล์ CSV ควรมีหัวคอลัมน์ดังตัวอย่าง:</p>
-                    <pre class="bg-light p-3 rounded mb-0">
-รหัสแปลง,โซน,พื้นที่ตรม,เจ้าของ,พืช,หมายเหตุ
-A001,โซน A,1600,สมชาย,ข้าว,-
-A002,โซน A,2400,สมหญิง,อ้อย,-
-B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pre>
-                    <p class="mt-2 mb-0 small">ระบบจะตรวจจับคอลัมน์ "โซน" และ "พื้นที่" อัตโนมัติเพื่อสรุปผล</p>
+                <div class="csv-format-box">
+                    <h6 class="mb-3" style="color: var(--text-dark);">
+                        <i class="bi bi-lightbulb me-2"></i> รูปแบบไฟล์ CSV ที่แนะนำ
+                    </h6>
+                    <p class="mb-3" style="color: var(--text-light);">ไฟล์ CSV ควรมีหัวคอลัมน์ดังตัวอย่างนี้:</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered bg-white" style="border-radius: 10px;">
+                            <thead style="background-color: var(--light-blue);">
+                                <tr>
+                                    <th>รหัสแปลง</th>
+                                    <th>โซน</th>
+                                    <th>พื้นที่ตรม</th>
+                                    <th>เจ้าของ</th>
+                                    <th>พืช</th>
+                                    <th>หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>A001</td>
+                                    <td>โซน A</td>
+                                    <td>1600</td>
+                                    <td>สมชาย</td>
+                                    <td>ข้าว</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>A002</td>
+                                    <td>โซน A</td>
+                                    <td>2400</td>
+                                    <td>สมหญิง</td>
+                                    <td>อ้อย</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>B001</td>
+                                    <td>โซน B</td>
+                                    <td>3200</td>
+                                    <td>สมหมาย</td>
+                                    <td>มันสำปะหลัง</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mt-3 mb-0 small" style="color: var(--text-light);">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        ระบบจะตรวจจับคอลัมน์ "โซน" และ "พื้นที่" อัตโนมัติเพื่อสรุปผล
+                    </p>
                 </div>
             </div>
         </div>
@@ -253,16 +489,16 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
         <div id="resultsSection" style="display: none;">
             <!-- Summary Statistics -->
             <div class="row mb-4">
-                <div class="col-md-3">
+                <div class="col-md-3 mb-4">
                     <div class="stat-card">
                         <div class="stat-icon">
-                            <i class="bi bi-grid-3x3-gap"></i>
+                            <i class="bi bi-table"></i>
                         </div>
                         <div class="stat-value" id="totalRows">0</div>
                         <div class="stat-label">จำนวนแถวข้อมูล</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mb-4">
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="bi bi-map"></i>
@@ -271,16 +507,16 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
                         <div class="stat-label">จำนวนโซน</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mb-4">
                     <div class="stat-card">
                         <div class="stat-icon">
-                            <i class="bi bi-arrows-angle-expand"></i>
+                            <i class="bi bi-square"></i>
                         </div>
                         <div class="stat-value" id="totalAreaRai">0</div>
                         <div class="stat-label">พื้นที่รวม (ไร่)</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mb-4">
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="bi bi-calculator"></i>
@@ -294,11 +530,11 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
             <!-- Zone Summary -->
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-pie-chart"></i> สรุปตามโซน
+                    <i class="bi bi-pie-chart me-2"></i> สรุปตามโซน
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-custom table-hover" id="zoneSummaryTable">
+                        <table class="table table-custom table-hover mb-0" id="zoneSummaryTable">
                             <thead>
                                 <tr>
                                     <th>โซน</th>
@@ -306,7 +542,7 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
                                     <th>พื้นที่รวม (ไร่)</th>
                                     <th>พื้นที่รวม (ตร.ม.)</th>
                                     <th>สัดส่วน</th>
-                                    <th>%</th>
+                                    <th>ร้อยละ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -320,11 +556,11 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
             <!-- Data Preview -->
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-table"></i> ตัวอย่างข้อมูลจากไฟล์ (แสดง 20 แถวแรก)
+                    <i class="bi bi-eye me-2"></i> ตัวอย่างข้อมูลจากไฟล์ (แสดง 20 แถวแรก)
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-custom table-hover" id="dataPreviewTable">
+                        <table class="table table-custom table-hover mb-0" id="dataPreviewTable">
                             <thead>
                                 <!-- Table headers will be populated here -->
                             </thead>
@@ -339,24 +575,27 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
             <!-- Export Options -->
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-download"></i> ส่งออกรายงาน
+                    <i class="bi bi-download me-2"></i> ส่งออกรายงาน
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <button class="btn btn-success w-100" id="exportSummaryBtn">
-                                <i class="bi bi-file-earmark-spreadsheet"></i> ดาวน์โหลดสรุปผล (CSV)
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <button class="btn btn-success w-100 py-3" id="exportSummaryBtn">
+                                <i class="bi bi-file-earmark-spreadsheet me-2"></i> ดาวน์โหลดสรุปผล
                             </button>
+                            <p class="small text-center text-muted mt-2">ไฟล์ CSV</p>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <button class="btn btn-primary w-100" id="exportFullBtn">
-                                <i class="bi bi-file-earmark-text"></i> ดาวน์โหลดข้อมูลทั้งหมด (CSV)
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100 py-3" id="exportFullBtn">
+                                <i class="bi bi-file-earmark-text me-2"></i> ดาวน์โหลดข้อมูลทั้งหมด
                             </button>
+                            <p class="small text-center text-muted mt-2">ไฟล์ CSV</p>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <button class="btn btn-secondary w-100" id="printReportBtn">
-                                <i class="bi bi-printer"></i> พิมพ์รายงาน
+                        <div class="col-md-4">
+                            <button class="btn btn-secondary w-100 py-3" id="printReportBtn">
+                                <i class="bi bi-printer me-2"></i> พิมพ์รายงาน
                             </button>
+                            <p class="small text-center text-muted mt-2">รูปแบบ PDF/Print</p>
                         </div>
                     </div>
                 </div>
@@ -366,9 +605,19 @@ B001,โซน B,3200,สมหมาย,มันสำปะหลัง,-</pr
 
     <!-- Footer -->
     <footer class="footer">
-        <p>ระบบอัปโหลด CSV และสรุปผลอัตโนมัติ &copy; 2023 | 1 ไร่ = 1600 ตารางเมตร</p>
+        <div class="row">
+            <div class="col-md-6 text-md-start">
+                <h6 class="mb-2">ระบบอัปโหลด CSV และสรุปผลอัตโนมัติ</h6>
+                <p class="mb-0">พัฒนาโดยใช้ HTML, JavaScript และ Bootstrap 5</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0">1 ไร่ = 1600 ตารางเมตร</p>
+                <p class="mb-0">© 2023 กรมพัฒนาที่ดิน</p>
+            </div>
+        </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
