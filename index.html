@@ -10,8 +10,8 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-file-csv"></i> ระบบอัปโหลดและวิเคราะห์ไฟล์ CSV</h1>
-            <p class="subtitle">อัปโหลดไฟล์ CSV ของคุณเพื่อวิเคราะห์ข้อมูลและสร้างรายงาน</p>
+            <h1><i class="fas fa-file-csv"></i> ระบบอัปโหลดไฟล์ CSV</h1>
+            <p class="subtitle">อัปโหลดไฟล์ CSV เพื่อดูข้อมูลและวิเคราะห์</p>
         </header>
 
         <main>
@@ -27,7 +27,7 @@
                     <p>หรือคลิกปุ่มด้านล่างเพื่อเลือกไฟล์จากคอมพิวเตอร์</p>
                     
                     <div class="file-input-wrapper">
-                        <input type="file" id="file-input" accept=".csv" hidden>
+                        <input type="file" id="file-input" accept=".csv, text/csv" hidden>
                         <label for="file-input" class="btn btn-primary">
                             <i class="fas fa-folder-open"></i> เลือกไฟล์ CSV
                         </label>
@@ -36,6 +36,13 @@
                     <p class="file-info">
                         <i class="fas fa-info-circle"></i> รองรับเฉพาะไฟล์ .csv (ขนาดไม่เกิน 10MB)
                     </p>
+                </div>
+
+                <div class="upload-progress hidden" id="upload-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="progress-text">กำลังอัปโหลด...</p>
                 </div>
             </section>
 
@@ -46,8 +53,8 @@
                 <div class="file-details">
                     <div class="file-header">
                         <i class="fas fa-file-csv"></i>
-                        <h3 id="file-name">CSV_กรองแล้ว_20260106_1341.csv</h3>
-                        <span class="status-badge success">
+                        <h3 id="file-name">-</h3>
+                        <span class="status-badge success" id="upload-status">
                             <i class="fas fa-check-circle"></i> อัปโหลดสำเร็จ
                         </span>
                     </div>
@@ -55,15 +62,15 @@
                     <div class="file-stats">
                         <div class="stat">
                             <i class="fas fa-columns"></i>
-                            <span id="column-count">14</span> คอลัมน์
+                            <span id="column-count">0</span> คอลัมน์
                         </div>
                         <div class="stat">
                             <i class="fas fa-list"></i>
-                            <span id="row-count">28,163</span> แถว
+                            <span id="row-count">0</span> แถว
                         </div>
                         <div class="stat">
                             <i class="fas fa-database"></i>
-                            <span id="file-size">3.2</span> MB
+                            <span id="file-size">0</span> MB
                         </div>
                     </div>
                 </div>
@@ -91,20 +98,12 @@
                         <p>ดูสถิติพื้นฐานของแต่ละคอลัมน์</p>
                     </div>
                     
-                    <div class="action-card" data-action="graph">
-                        <div class="action-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h3>สร้างกราฟ</h3>
-                        <p>เลือกคอลัมน์เพื่อแสดงแผนภูมิ</p>
-                    </div>
-                    
                     <div class="action-card" data-action="download">
                         <div class="action-icon">
                             <i class="fas fa-download"></i>
                         </div>
-                        <h3>ดาวน์โหลดผลลัพธ์</h3>
-                        <p>บันทึกเป็นไฟล์ใหม่</p>
+                        <h3>ดาวน์โหลดข้อมูล</h3>
+                        <p>บันทึกข้อมูลที่ประมวลผลแล้ว</p>
                     </div>
                     
                     <div class="action-card" data-action="delete">
@@ -123,9 +122,6 @@
                     <button class="btn btn-secondary" id="analyze-btn">
                         <i class="fas fa-chart-bar"></i> วิเคราะห์
                     </button>
-                    <button class="btn btn-secondary" id="graph-btn">
-                        <i class="fas fa-chart-line"></i> สร้างกราฟ
-                    </button>
                     <button class="btn btn-secondary" id="download-btn">
                         <i class="fas fa-download"></i> ดาวน์โหลด
                     </button>
@@ -135,39 +131,75 @@
                 </div>
             </section>
 
+            <!-- ตัวอย่างข้อมูล CSV สำหรับทดสอบ -->
+            <section id="sample-section" class="card">
+                <h2><i class="fas fa-vial"></i> ทดสอบระบบ</h2>
+                <p>หากไม่มีไฟล์ CSV ให้ทดสอบ คุณสามารถใช้ไฟล์ตัวอย่างนี้:</p>
+                
+                <div class="sample-actions">
+                    <button class="btn btn-outline" id="create-sample-btn">
+                        <i class="fas fa-plus-circle"></i> สร้างไฟล์ CSV ตัวอย่าง
+                    </button>
+                    <button class="btn btn-outline" id="download-sample-btn">
+                        <i class="fas fa-download"></i> ดาวน์โหลดไฟล์ตัวอย่าง
+                    </button>
+                </div>
+                
+                <div class="sample-preview hidden" id="sample-preview">
+                    <h4>ตัวอย่างข้อมูล:</h4>
+                    <pre id="sample-data"></pre>
+                </div>
+            </section>
+
+            <!-- ส่วนแสดงตัวอย่างข้อมูล -->
+            <section id="preview-section" class="card hidden">
+                <h2><i class="fas fa-table"></i> ตัวอย่างข้อมูล</h2>
+                <div id="data-preview">
+                    <p>กรุณาอัปโหลดไฟล์เพื่อดูข้อมูล</p>
+                </div>
+            </section>
+
             <!-- ส่วนคำแนะนำ -->
             <section id="help-section" class="card">
-                <h2><i class="fas fa-question-circle"></i> คำแนะนำเพิ่มเติม</h2>
-                <ul class="tips">
-                    <li><i class="fas fa-check"></i> ระบบจะประมวลผลอัตโนมัติเมื่ออัปโหลดไฟล์สำเร็จ</li>
-                    <li><i class="fas fa-check"></i> สามารถคลิกที่ชื่อไฟล์เพื่อดูรายละเอียดเพิ่มเติม</li>
-                    <li><i class="fas fa-check"></i> หากไม่เห็นปุ่มใดปุ่มหนึ่ง โปรดรีเฟรชหน้าจอหรือลองอัปโหลดไฟล์อีกครั้ง</li>
-                    <li><i class="fas fa-check"></i> ระบบรองรับไฟล์ CSV ที่มีอักขระไทยและภาษาอังกฤษ</li>
-                    <li><i class="fas fa-check"></i> คุณสามารถลากไฟล์มาวางได้จาก Explorer หรือ Finder</li>
-                </ul>
+                <h2><i class="fas fa-question-circle"></i> คำแนะนำการใช้งาน</h2>
+                <div class="help-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>อัปโหลดไฟล์ CSV</h4>
+                            <p>ลากไฟล์มาวางในพื้นที่สีฟ้า หรือคลิกปุ่ม "เลือกไฟล์ CSV"</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>ตรวจสอบข้อมูล</h4>
+                            <p>ระบบจะแสดงข้อมูลไฟล์และสรุปจำนวนแถว/คอลัมน์</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>ดำเนินการกับข้อมูล</h4>
+                            <p>ใช้ปุ่มต่างๆ เพื่อดูตัวอย่าง วิเคราะห์ หรือดาวน์โหลดข้อมูล</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tips">
+                    <h4><i class="fas fa-lightbulb"></i> เคล็ดลับ</h4>
+                    <ul>
+                        <li>ไฟล์ CSV ควรมีหัวตารางในแถวแรก</li>
+                        <li>รองรับไฟล์ที่มีอักขระภาษาไทยและภาษาอังกฤษ</li>
+                        <li>คุณสามารถทดสอบระบบด้วยการสร้างไฟล์ตัวอย่าง</li>
+                    </ul>
+                </div>
             </section>
         </main>
 
         <footer>
-            <p>© 2023 ระบบวิเคราะห์ข้อมูล CSV | พัฒนาด้วย HTML, CSS และ JavaScript</p>
+            <p>ระบบอัปโหลดไฟล์ CSV | เวอร์ชัน 2.0 | ใช้งานได้ทันทีบนเบราว์เซอร์</p>
         </footer>
-    </div>
-
-    <!-- Modal สำหรับแสดงตัวอย่างข้อมูล -->
-    <div id="preview-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-table"></i> ตัวอย่างข้อมูล</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>กำลังโหลดข้อมูล...</p>
-                <div id="preview-table-container"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary close-modal">ปิด</button>
-            </div>
-        </div>
     </div>
 
     <script src="script.js"></script>
