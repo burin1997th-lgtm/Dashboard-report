@@ -8,36 +8,37 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-blue: #4682B4;      /* Steel Blue */
-            --light-blue: #B0E0E6;         /* Powder Blue */
-            --medium-blue: #6495ED;        /* Cornflower Blue */
-            --dark-blue: #4169E1;          /* Royal Blue */
-            --accent-blue: #87CEEB;        /* Sky Blue */
-            --text-dark: #2F4F4F;          /* Dark Slate Gray */
-            --text-light: #708090;         /* Slate Gray */
-            --pastel-green: #98FB98;       /* Pale Green */
-            --pastel-orange: #FFDAB9;      /* Peach Puff */
+            --primary-blue: #4A90E2;
+            --light-blue: #E3F2FD;
+            --medium-blue: #64B5F6;
+            --dark-blue: #1976D2;
+            --accent-blue: #90CAF9;
+            --pastel-green: #A5D6A7;
+            --pastel-orange: #FFCC80;
+            --pastel-pink: #F8BBD0;
+            --text-dark: #2C3E50;
+            --text-light: #7B8A8B;
         }
         
         body {
-            background: linear-gradient(135deg, #E6F3FF 0%, #F0F8FF 100%);
+            background: linear-gradient(135deg, #F5F7FA 0%, #E3F2FD 100%);
             font-family: 'Sarabun', 'Kanit', sans-serif;
             color: var(--text-dark);
             min-height: 100vh;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
         }
         
         /* Header */
         .header {
-            background: linear-gradient(135deg, var(--light-blue) 0%, var(--primary-blue) 100%);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: white;
             border-radius: 20px;
             padding: 40px 30px;
             margin: 30px auto;
-            box-shadow: 0 10px 30px rgba(70, 130, 180, 0.2);
+            box-shadow: 0 10px 30px rgba(74, 144, 226, 0.2);
             position: relative;
             overflow: hidden;
         }
@@ -45,14 +46,11 @@
         .header::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-            transform: rotate(15deg);
-            opacity: 0.3;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
         
         /* Upload Area */
@@ -61,36 +59,41 @@
             border-radius: 20px;
             padding: 50px 30px;
             text-align: center;
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: white;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 30px;
-            backdrop-filter: blur(5px);
+            position: relative;
         }
         
         .upload-area:hover {
-            background-color: rgba(176, 224, 230, 0.2);
+            background-color: rgba(227, 242, 253, 0.3);
             border-color: var(--dark-blue);
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(100, 149, 237, 0.15);
+            box-shadow: 0 15px 30px rgba(100, 181, 246, 0.15);
         }
         
         .upload-area.dragover {
-            background-color: rgba(135, 206, 235, 0.3);
+            background-color: rgba(144, 202, 249, 0.2);
             border-color: var(--dark-blue);
-            animation: pulse 1.5s infinite;
+            animation: pulse 2s infinite;
         }
         
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(65, 105, 225, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(65, 105, 225, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(65, 105, 225, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(25, 118, 210, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0); }
         }
         
         .upload-icon {
             font-size: 4rem;
             color: var(--dark-blue);
             margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
         }
         
         /* Cards */
@@ -98,7 +101,7 @@
             border-radius: 18px;
             border: none;
             background: white;
-            box-shadow: 0 8px 25px rgba(176, 224, 230, 0.2);
+            box-shadow: 0 8px 25px rgba(144, 202, 249, 0.1);
             margin-bottom: 25px;
             transition: all 0.3s ease;
             overflow: hidden;
@@ -106,11 +109,11 @@
         
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(176, 224, 230, 0.3);
+            box-shadow: 0 12px 30px rgba(144, 202, 249, 0.2);
         }
         
         .card-header {
-            background: linear-gradient(135deg, var(--light-blue) 0%, var(--medium-blue) 100%);
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--accent-blue) 100%);
             color: var(--text-dark);
             font-weight: 600;
             border-radius: 18px 18px 0 0 !important;
@@ -132,8 +135,8 @@
         
         .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(100, 149, 237, 0.3);
-            background: linear-gradient(135deg, var(--dark-blue) 0%, #1E3A8A 100%);
+            box-shadow: 0 8px 20px rgba(100, 181, 246, 0.3);
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1565C0 100%);
             color: white;
         }
         
@@ -158,7 +161,7 @@
             border-radius: 16px;
             padding: 25px 20px;
             text-align: center;
-            box-shadow: 0 6px 20px rgba(176, 224, 230, 0.2);
+            box-shadow: 0 6px 20px rgba(144, 202, 249, 0.1);
             height: 100%;
             border: 2px solid var(--light-blue);
             transition: all 0.3s ease;
@@ -166,7 +169,7 @@
         
         .stat-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 25px rgba(176, 224, 230, 0.3);
+            box-shadow: 0 12px 25px rgba(144, 202, 249, 0.2);
             border-color: var(--medium-blue);
         }
         
@@ -192,11 +195,156 @@
             font-weight: 500;
         }
         
+        /* Column Selection */
+        .column-selection-container {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 25px;
+            border: 2px solid var(--light-blue);
+        }
+        
+        .column-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .column-card {
+            background: #F8FBFF;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #E3F2FD;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .column-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(144, 202, 249, 0.15);
+            border-color: var(--accent-blue);
+        }
+        
+        .column-card.selected {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-color: var(--pastel-green);
+        }
+        
+        .column-card.zone-selected {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-color: var(--primary-blue);
+        }
+        
+        .column-card.area-selected {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-color: var(--pastel-orange);
+        }
+        
+        .column-card.id-selected {
+            background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%);
+            border-color: var(--pastel-pink);
+        }
+        
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .column-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+            word-break: break-word;
+        }
+        
+        .column-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+            background: var(--light-blue);
+            color: var(--dark-blue);
+        }
+        
+        .column-preview {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+            border: 1px solid #E3F2FD;
+        }
+        
+        .column-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        
+        .action-btn.zone-btn {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        .action-btn.area-btn {
+            background: var(--pastel-orange);
+            color: var(--text-dark);
+        }
+        
+        .action-btn.id-btn {
+            background: var(--pastel-pink);
+            color: var(--text-dark);
+        }
+        
+        .action-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        /* Selected Columns Display */
+        .selected-columns-display {
+            background: linear-gradient(135deg, #F5F7FA 0%, #E3F2FD 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 25px;
+            border: 2px dashed var(--medium-blue);
+        }
+        
+        .selected-column-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-blue);
+            box-shadow: 0 3px 10px rgba(144, 202, 249, 0.1);
+        }
+        
         /* Tables */
         .table-custom {
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(176, 224, 230, 0.1);
+            box-shadow: 0 5px 15px rgba(144, 202, 249, 0.1);
             background: white;
         }
         
@@ -215,45 +363,14 @@
         .table-custom td {
             padding: 14px 16px;
             vertical-align: middle;
-            border-bottom: 1px solid #E6F3FF;
-        }
-        
-        /* Column Selector */
-        .column-selector-container {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin-top: 25px;
-            border: 2px solid var(--light-blue);
-        }
-        
-        .column-option {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background: #F8FDFF;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--medium-blue);
-            transition: all 0.3s ease;
-        }
-        
-        .column-option:hover {
-            background: #E6F3FF;
-            transform: translateX(5px);
-        }
-        
-        .column-option.selected {
-            background: #E6F3FF;
-            border-left: 4px solid var(--dark-blue);
-            box-shadow: 0 4px 10px rgba(70, 130, 180, 0.1);
+            border-bottom: 1px solid #E3F2FD;
         }
         
         /* Progress Bars */
         .progress-custom {
             height: 10px;
             border-radius: 10px;
-            background-color: #E6F3FF;
+            background-color: #E3F2FD;
             margin-top: 8px;
             overflow: hidden;
         }
@@ -264,7 +381,7 @@
             transition: width 1s ease-in-out;
         }
         
-        /* Badges */
+        /* Zone Badges */
         .zone-badge {
             font-size: 0.85rem;
             padding: 7px 15px;
@@ -277,11 +394,27 @@
         
         /* File Info */
         .file-info {
-            background: linear-gradient(135deg, rgba(152, 251, 152, 0.2) 0%, rgba(176, 224, 230, 0.2) 100%);
+            background: linear-gradient(135deg, rgba(165, 214, 167, 0.2) 0%, rgba(227, 242, 253, 0.3) 100%);
             border-radius: 15px;
             padding: 20px;
             margin-top: 25px;
             border: 1px solid var(--pastel-green);
+        }
+        
+        /* Loading Animation */
+        .loading-spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(144, 202, 249, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--dark-blue);
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         /* Footer */
@@ -295,55 +428,6 @@
             border-top: 1px solid var(--light-blue);
         }
         
-        /* Alert Messages */
-        .alert-custom {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            margin-bottom: 25px;
-        }
-        
-        /* Tabs */
-        .nav-tabs {
-            border-bottom: 2px solid var(--light-blue);
-        }
-        
-        .nav-tabs .nav-link {
-            color: var(--text-dark);
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px 10px 0 0;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        
-        .nav-tabs .nav-link:hover {
-            background-color: #E6F3FF;
-            color: var(--dark-blue);
-        }
-        
-        .nav-tabs .nav-link.active {
-            background-color: var(--light-blue);
-            color: var(--text-dark);
-            border-bottom: 3px solid var(--dark-blue);
-        }
-        
-        /* Loading Animation */
-        .loading-spinner {
-            display: none;
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(176, 224, 230, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--dark-blue);
-            animation: spin 1s ease-in-out infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
         /* Responsive */
         @media (max-width: 768px) {
             .header {
@@ -353,6 +437,10 @@
             
             .upload-area {
                 padding: 30px 20px;
+            }
+            
+            .column-grid {
+                grid-template-columns: 1fr;
             }
             
             .stat-value {
@@ -370,7 +458,7 @@
         <!-- Header -->
         <div class="header text-center">
             <h1 class="mb-3"><i class="bi bi-file-earmark-spreadsheet-fill"></i> ระบบเลือกคอลัมน์สรุปผลจาก CSV</h1>
-            <p class="lead mb-0">อัปโหลดไฟล์ CSV และเลือกคอลัมน์ที่ต้องการสรุปผลตามโซน</p>
+            <p class="lead mb-0">อัปโหลดไฟล์ CSV และเลือกคอลัมน์ที่ต้องการสำหรับสรุปผล</p>
         </div>
 
         <!-- Upload Section -->
@@ -421,307 +509,259 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Column Selection (Manual Selection) -->
-                <div id="columnSelector" class="column-selector-container" style="display: none;">
-                    <h5 class="mb-4" style="color: var(--text-dark);">
-                        <i class="bi bi-gear me-2"></i> ขั้นตอนที่ 2: เลือกคอลัมน์สำหรับสรุปผล
+        <!-- Column Selection Section -->
+        <div id="columnSelectionSection" class="card" style="display: none;">
+            <div class="card-header">
+                <i class="bi bi-gear"></i> ขั้นตอนที่ 2: เลือกคอลัมน์สำหรับสรุปผล
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h5 class="mb-3" style="color: var(--text-dark);">
+                            <i class="bi bi-list-check me-2"></i> คอลัมน์ทั้งหมดจากไฟล์
+                        </h5>
+                        <p class="text-muted mb-0">เลือกคอลัมน์ที่ต้องการใช้งานโดยคลิกที่ปุ่มด้านล่างแต่ละคอลัมน์</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-outline-primary" id="clearSelectionsBtn">
+                            <i class="bi bi-x-circle me-2"></i> ล้างการเลือกทั้งหมด
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="column-grid" id="columnGrid">
+                    <!-- Columns will be loaded here -->
+                </div>
+                
+                <!-- Selected Columns Display -->
+                <div id="selectedColumnsDisplay" class="selected-columns-display" style="display: none;">
+                    <h5 class="mb-3" style="color: var(--text-dark);">
+                        <i class="bi bi-check-circle me-2"></i> คอลัมน์ที่เลือกแล้ว
                     </h5>
-                    
                     <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <h6 class="mb-3" style="color: var(--text-dark);">
-                                <i class="bi bi-pin-map me-2"></i> เลือกคอลัมน์โซน
-                            </h6>
-                            <div id="zoneColumnOptions" class="mb-4">
-                                <!-- Zone column options will appear here -->
-                                <p class="text-muted text-center">กำลังโหลดคอลัมน์...</p>
-                            </div>
-                            
-                            <h6 class="mb-3" style="color: var(--text-dark);">
-                                <i class="bi bi-calculator me-2"></i> เลือกคอลัมน์พื้นที่ (ไร่)
-                            </h6>
-                            <div id="areaColumnOptions" class="mb-4">
-                                <!-- Area column options will appear here -->
-                                <p class="text-muted text-center">กำลังโหลดคอลัมน์...</p>
+                        <div class="col-md-4 mb-3">
+                            <div class="selected-column-item">
+                                <div>
+                                    <strong>คอลัมน์โซน:</strong><br>
+                                    <span class="text-muted" id="selectedZoneColumn">ยังไม่ได้เลือก</span>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="col-md-6 mb-4">
-                            <h6 class="mb-3" style="color: var(--text-dark);">
-                                <i class="bi bi-hash me-2"></i> เลือกคอลัมน์รหัสแปลง (ไม่บังคับ)
-                            </h6>
-                            <div id="idColumnOptions" class="mb-4">
-                                <!-- ID column options will appear here -->
-                                <p class="text-muted text-center">กำลังโหลดคอลัมน์...</p>
+                        <div class="col-md-4 mb-3">
+                            <div class="selected-column-item">
+                                <div>
+                                    <strong>คอลัมน์พื้นที่ (ไร่):</strong><br>
+                                    <span class="text-muted" id="selectedAreaColumn">ยังไม่ได้เลือก</span>
+                                </div>
                             </div>
-                            
-                            <div class="alert alert-info" style="background-color: var(--light-blue); border: none;">
-                                <h6><i class="bi bi-lightbulb me-2"></i> ข้อแนะนำ</h6>
-                                <p class="mb-0 small">
-                                    • เลือกคอลัมน์ "โซน" สำหรับการจัดกลุ่มข้อมูล<br>
-                                    • เลือกคอลัมน์ "พื้นที่" ที่มีหน่วยเป็น "ไร่"<br>
-                                    • คอลัมน์รหัสแปลงใช้สำหรับระบุแปลงซ้ำ
-                                </p>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="selected-column-item">
+                                <div>
+                                    <strong>คอลัมน์รหัสแปลง:</strong><br>
+                                    <span class="text-muted" id="selectedIdColumn">ยังไม่ได้เลือก</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mt-4 text-center">
+                    <div class="alert alert-info mt-3" style="background-color: var(--light-blue); border: none;">
+                        <h6><i class="bi bi-lightbulb me-2"></i> คำแนะนำ</h6>
+                        <p class="mb-0 small">
+                            • <strong>คอลัมน์โซน:</strong> ใช้สำหรับจัดกลุ่มข้อมูลแปลง<br>
+                            • <strong>คอลัมน์พื้นที่:</strong> ควรเป็นข้อมูลพื้นที่ในหน่วยไร่<br>
+                            • <strong>คอลัมน์รหัสแปลง:</strong> ใช้สำหรับระบุแปลง (ไม่บังคับ)
+                        </p>
+                    </div>
+                    
+                    <div class="text-center mt-4">
                         <button class="btn btn-primary btn-lg px-5" id="generateReportBtn">
                             <i class="bi bi-graph-up me-2"></i> สร้างรายงานสรุปผล
                         </button>
                     </div>
                 </div>
-
-                <!-- CSV Format Help -->
-                <div class="alert alert-info mt-4" style="background-color: #F0F8FF; border: 1px solid var(--accent-blue);">
-                    <h6 class="mb-3" style="color: var(--text-dark);">
-                        <i class="bi bi-card-checklist me-2"></i> รูปแบบไฟล์ CSV ที่แนะนำ
-                    </h6>
-                    <div class="table-responsive">
-                        <table class="table table-bordered bg-white mb-3" style="border-radius: 10px;">
-                            <thead style="background-color: var(--light-blue);">
-                                <tr>
-                                    <th>แปลงที่</th>
-                                    <th>โซน</th>
-                                    <th>พื้นที่ไร่</th>
-                                    <th>เจ้าของ</th>
-                                    <th>พืช</th>
-                                    <th>หมายเหตุ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>A001</td>
-                                    <td>โซน A</td>
-                                    <td>2.5</td>
-                                    <td>สมชาย</td>
-                                    <td>ข้าว</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>A002</td>
-                                    <td>โซน A</td>
-                                    <td>3.0</td>
-                                    <td>สมหญิง</td>
-                                    <td>อ้อย</td>
-                                    <td>แปลงทดลอง</td>
-                                </tr>
-                                <tr>
-                                    <td>B001</td>
-                                    <td>โซน B</td>
-                                    <td>5.2</td>
-                                    <td>สมหมาย</td>
-                                    <td>มันสำปะหลัง</td>
-                                    <td>-</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="mb-0 small" style="color: var(--text-light);">
-                        <i class="bi bi-exclamation-circle me-1"></i>
-                        ระบบสนับสนุนการเลือกคอลัมน์โซนและพื้นที่ไร่จากไฟล์ CSV ของคุณ
-                    </p>
-                </div>
             </div>
         </div>
 
         <!-- Results Section -->
-        <div id="resultsSection" style="display: none;">
-            <!-- Summary Statistics -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-4">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-grid-3x3-gap"></i>
-                        </div>
-                        <div class="stat-value" id="totalPlots">0</div>
-                        <div class="stat-label">จำนวนแปลงทั้งหมด</div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-map"></i>
-                        </div>
-                        <div class="stat-value" id="totalZones">0</div>
-                        <div class="stat-label">จำนวนโซน</div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-square"></i>
-                        </div>
-                        <div class="stat-value" id="totalArea">0</div>
-                        <div class="stat-label">พื้นที่รวม (ไร่)</div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-graph-up"></i>
-                        </div>
-                        <div class="stat-value" id="avgArea">0</div>
-                        <div class="stat-label">พื้นที่เฉลี่ย/แปลง</div>
-                    </div>
-                </div>
+        <div id="resultsSection" class="card" style="display: none;">
+            <div class="card-header">
+                <i class="bi bi-bar-chart"></i> ขั้นตอนที่ 3: ผลลัพธ์สรุปผล
             </div>
-
-            <!-- Results Tabs -->
-            <div class="card">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" id="resultsTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="zone-tab" data-bs-toggle="tab" data-bs-target="#zone" type="button">
-                                <i class="bi bi-pie-chart me-2"></i> สรุปตามโซน
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots" type="button">
-                                <i class="bi bi-table me-2"></i> รายการแปลงทั้งหมด
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">
-                                <i class="bi bi-bar-chart me-2"></i> การวิเคราะห์
-                            </button>
-                        </li>
-                    </ul>
+            <div class="card-body">
+                <!-- Summary Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                            </div>
+                            <div class="stat-value" id="totalPlots">0</div>
+                            <div class="stat-label">จำนวนแปลงทั้งหมด</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-map"></i>
+                            </div>
+                            <div class="stat-value" id="totalZones">0</div>
+                            <div class="stat-label">จำนวนโซน</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-square"></i>
+                            </div>
+                            <div class="stat-value" id="totalArea">0</div>
+                            <div class="stat-label">พื้นที่รวม (ไร่)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div class="stat-value" id="avgArea">0</div>
+                            <div class="stat-label">พื้นที่เฉลี่ย/แปลง</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="tab-content" id="resultsTabContent">
-                        <!-- Zone Summary Tab -->
-                        <div class="tab-pane fade show active" id="zone" role="tabpanel">
-                            <div class="table-responsive">
-                                <table class="table table-custom table-hover mb-0" id="zoneSummaryTable">
-                                    <thead>
-                                        <tr>
-                                            <th>โซน</th>
-                                            <th>จำนวนแปลง</th>
-                                            <th>พื้นที่รวม (ไร่)</th>
-                                            <th>พื้นที่เฉลี่ย/แปลง</th>
-                                            <th>สัดส่วนพื้นที่</th>
-                                            <th>%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Zone summary will be populated here -->
-                                    </tbody>
-                                </table>
+
+                <!-- Results Tabs -->
+                <ul class="nav nav-tabs mb-4" id="resultsTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="zone-tab" data-bs-toggle="tab" data-bs-target="#zone" type="button">
+                            <i class="bi bi-pie-chart me-2"></i> สรุปตามโซน
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots" type="button">
+                            <i class="bi bi-table me-2"></i> รายการแปลง
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button">
+                            <i class="bi bi-download me-2"></i> ส่งออก
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="resultsTabContent">
+                    <!-- Zone Summary Tab -->
+                    <div class="tab-pane fade show active" id="zone" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover mb-0" id="zoneSummaryTable">
+                                <thead>
+                                    <tr>
+                                        <th>โซน</th>
+                                        <th>จำนวนแปลง</th>
+                                        <th>พื้นที่รวม (ไร่)</th>
+                                        <th>พื้นที่เฉลี่ย/แปลง</th>
+                                        <th>สัดส่วนพื้นที่</th>
+                                        <th>%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Zone summary will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Plots List Tab -->
+                    <div class="tab-pane fade" id="plots" role="tabpanel">
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background-color: var(--light-blue);">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchPlot" placeholder="ค้นหาจากรหัสแปลงหรือโซน...">
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <select class="form-select" id="filterZone">
+                                    <option value="">ทั้งหมด (โซน)</option>
+                                    <!-- Zone options will be populated -->
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-secondary w-100" id="resetFilterBtn">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> รีเซ็ต
+                                </button>
                             </div>
                         </div>
                         
-                        <!-- Plots List Tab -->
-                        <div class="tab-pane fade" id="plots" role="tabpanel">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text" style="background-color: var(--light-blue);">
-                                            <i class="bi bi-search"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="searchPlot" placeholder="ค้นหาจากรหัสแปลงหรือโซน...">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <select class="form-select" id="filterZone">
-                                        <option value="">ทั้งหมด (โซน)</option>
-                                        <!-- Zone options will be populated -->
-                                    </select>
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover mb-0" id="plotsTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>รหัสแปลง</th>
+                                        <th>โซน</th>
+                                        <th>พื้นที่ (ไร่)</th>
+                                        <th>หมายเหตุ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Plots data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Tab -->
+                    <div class="tab-pane fade" id="export" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="text-center p-4 border rounded" style="background-color: #F8FBFF;">
+                                    <i class="bi bi-file-earmark-spreadsheet display-4 mb-3" style="color: var(--dark-blue);"></i>
+                                    <h5>ดาวน์โหลดสรุปผล</h5>
+                                    <p class="text-muted small mb-3">ไฟล์ CSV สรุปตามโซน</p>
+                                    <button class="btn btn-primary w-100" id="exportSummaryBtn">
+                                        <i class="bi bi-download me-2"></i> ดาวน์โหลด
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div class="table-responsive">
-                                <table class="table table-custom table-hover mb-0" id="plotsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>รหัสแปลง</th>
-                                            <th>โซน</th>
-                                            <th>พื้นที่ (ไร่)</th>
-                                            <th>หมายเหตุ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Plots data will be populated here -->
-                                    </tbody>
-                                </table>
+                            <div class="col-md-4 mb-4">
+                                <div class="text-center p-4 border rounded" style="background-color: #F8FBFF;">
+                                    <i class="bi bi-file-earmark-text display-4 mb-3" style="color: var(--dark-blue);"></i>
+                                    <h5>ดาวน์โหลดรายการแปลง</h5>
+                                    <p class="text-muted small mb-3">ไฟล์ CSV รายการแปลงทั้งหมด</p>
+                                    <button class="btn btn-primary w-100" id="exportPlotsBtn">
+                                        <i class="bi bi-download me-2"></i> ดาวน์โหลด
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="text-center p-4 border rounded" style="background-color: #F8FBFF;">
+                                    <i class="bi bi-printer display-4 mb-3" style="color: var(--dark-blue);"></i>
+                                    <h5>พิมพ์รายงาน</h5>
+                                    <p class="text-muted small mb-3">รูปแบบ PDF/Print</p>
+                                    <button class="btn btn-primary w-100" id="printReportBtn">
+                                        <i class="bi bi-printer me-2"></i> พิมพ์
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Analysis Tab -->
-                        <div class="tab-pane fade" id="analysis" role="tabpanel">
+                        <div class="alert alert-info mt-3" style="background-color: var(--light-blue); border: none;">
+                            <h6><i class="bi bi-info-circle me-2"></i> ข้อมูลสรุปผล</h6>
                             <div class="row">
-                                <div class="col-md-8">
-                                    <h6 class="mb-3" style="color: var(--text-dark);">
-                                        <i class="bi bi-bar-chart-line me-2"></i> กราฟแสดงจำนวนแปลงตามโซน
-                                    </h6>
-                                    <div style="height: 300px; background: #F8FDFF; border-radius: 12px; padding: 20px;">
-                                        <canvas id="zoneChart"></canvas>
-                                    </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>คอลัมน์โซนที่ใช้:</strong> <span id="reportZoneColumn">-</span></p>
+                                    <p class="mb-1"><strong>คอลัมน์พื้นที่ที่ใช้:</strong> <span id="reportAreaColumn">-</span></p>
                                 </div>
-                                <div class="col-md-4">
-                                    <h6 class="mb-3" style="color: var(--text-dark);">
-                                        <i class="bi bi-info-circle me-2"></i> สถิติสำคัญ
-                                    </h6>
-                                    <div class="list-group">
-                                        <div class="list-group-item border-0 mb-2" style="background-color: #F8FDFF;">
-                                            <div class="d-flex justify-content-between">
-                                                <span>โซนที่มีแปลงมากที่สุด</span>
-                                                <span class="fw-bold" id="maxPlotsZone">-</span>
-                                            </div>
-                                        </div>
-                                        <div class="list-group-item border-0 mb-2" style="background-color: #F8FDFF;">
-                                            <div class="d-flex justify-content-between">
-                                                <span>โซนที่มีพื้นที่มากที่สุด</span>
-                                                <span class="fw-bold" id="maxAreaZone">-</span>
-                                            </div>
-                                        </div>
-                                        <div class="list-group-item border-0 mb-2" style="background-color: #F8FDFF;">
-                                            <div class="d-flex justify-content-between">
-                                                <span>แปลงที่ใหญ่ที่สุด</span>
-                                                <span class="fw-bold" id="largestPlot">-</span>
-                                            </div>
-                                        </div>
-                                        <div class="list-group-item border-0" style="background-color: #F8FDFF;">
-                                            <div class="d-flex justify-content-between">
-                                                <span>พื้นที่แปลงเฉลี่ย</span>
-                                                <span class="fw-bold" id="averagePlotArea">- ไร่</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>คอลัมน์รหัสแปลงที่ใช้:</strong> <span id="reportIdColumn">-</span></p>
+                                    <p class="mb-1"><strong>จำนวนข้อมูลทั้งหมด:</strong> <span id="reportTotalData">0</span> แถว</p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Export Options -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="bi bi-download me-2"></i> ส่งออกรายงาน
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <button class="btn btn-success w-100 py-3" id="exportSummaryBtn">
-                                <i class="bi bi-file-earmark-spreadsheet me-2"></i> ดาวน์โหลดสรุปผล
-                            </button>
-                            <p class="small text-center text-muted mt-2">ไฟล์ CSV (สรุปตามโซน)</p>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-primary w-100 py-3" id="exportPlotsBtn">
-                                <i class="bi bi-file-earmark-text me-2"></i> ดาวน์โหลดรายการแปลง
-                            </button>
-                            <p class="small text-center text-muted mt-2">ไฟล์ CSV (แปลงทั้งหมด)</p>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-secondary w-100 py-3" id="printReportBtn">
-                                <i class="bi bi-printer me-2"></i> พิมพ์รายงาน
-                            </button>
-                            <p class="small text-center text-muted mt-2">รูปแบบ PDF/Print</p>
                         </div>
                     </div>
                 </div>
@@ -734,17 +774,16 @@
         <div class="row">
             <div class="col-md-6 text-md-start">
                 <h6 class="mb-2">ระบบเลือกคอลัมน์สรุปผลจาก CSV</h6>
-                <p class="mb-0">เลือกคอลัมน์โซนและพื้นที่ไร่สำหรับสรุปผลตามโซน</p>
+                <p class="mb-0">ออกแบบและพัฒนาโดยทีมงาน</p>
             </div>
             <div class="col-md-6 text-md-end">
-                <p class="mb-0">© 2023 กรมพัฒนาที่ดิน</p>
+                <p class="mb-0">© 2023 All Rights Reserved</p>
             </div>
         </div>
     </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
