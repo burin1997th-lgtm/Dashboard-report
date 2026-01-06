@@ -1,718 +1,404 @@
-/* พื้นฐาน */
-:root {
-    --primary-color: #1a5f7a;
-    --secondary-color: #57cc99;
-    --accent-color: #ff9a3c;
-    --light-color: #f8f9fa;
-    --dark-color: #2c3e50;
-    --text-color: #333;
-    --text-light: #777;
-    --border-color: #dee2e6;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --radius: 10px;
-    --zone-color-1: #4d96ff;
-    --zone-color-2: #6bc77a;
-    --zone-color-3: #ff9a3c;
-    --zone-color-4: #ff6b6b;
-    --zone-color-5: #9d4edd;
-}
-
+/* Reset และพื้นฐาน */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', 'Prompt', 'Sarabun', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    background-color: #f8f9fa;
-    color: var(--text-color);
+    background-color: #f5f7fa;
+    color: #333;
     line-height: 1.6;
+    padding: 20px;
 }
 
 .container {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
 }
 
-/* ส่วนหัว */
+/* Header */
 header {
     text-align: center;
-    margin-bottom: 40px;
-    padding: 30px 20px;
-    background: linear-gradient(135deg, var(--primary-color), #2a9d8f);
-    color: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    position: relative;
-    overflow: hidden;
-}
-
-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>');
-    opacity: 0.3;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 header h1 {
-    font-size: 2.4rem;
+    color: #2c3e50;
     margin-bottom: 10px;
+    font-size: 2.2rem;
+}
+
+.subtitle {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+/* การ์ดทั่วไป */
+.card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 15px;
-    position: relative;
-    z-index: 1;
+    gap: 10px;
 }
 
-header .subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    max-width: 800px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
+.section-subtitle {
+    color: #7f8c8d;
+    margin-bottom: 20px;
 }
 
-/* ส่วนอัปโหลด */
-.upload-section {
-    margin-bottom: 40px;
-}
-
-.upload-box {
-    background: white;
-    border-radius: var(--radius);
-    padding: 30px;
-    box-shadow: var(--shadow);
-}
-
+/* พื้นที่อัปโหลด */
 .upload-area {
-    border: 3px dashed var(--secondary-color);
-    border-radius: var(--radius);
-    padding: 50px 20px;
-    margin-bottom: 30px;
-    cursor: pointer;
-    transition: all 0.3s;
-    background-color: #f8fafc;
+    border: 3px dashed #3498db;
+    border-radius: 10px;
+    padding: 40px 20px;
     text-align: center;
-    position: relative;
+    background-color: #f8fafc;
+    transition: all 0.3s;
+    cursor: pointer;
 }
 
-.upload-area:hover {
-    background-color: #e8f5e9;
-    border-color: var(--primary-color);
-}
-
-.upload-area.drag-over {
-    background-color: #d4edda;
-    border-color: var(--accent-color);
-    border-style: solid;
+.upload-area:hover, .upload-area.dragover {
+    background-color: #e8f4fc;
+    border-color: #2980b9;
 }
 
 .upload-icon {
-    font-size: 70px;
-    color: var(--secondary-color);
-    margin-bottom: 20px;
-    transition: transform 0.3s;
-}
-
-.upload-area:hover .upload-icon {
-    transform: scale(1.1);
+    font-size: 60px;
+    color: #3498db;
+    margin-bottom: 15px;
 }
 
 .upload-area h3 {
-    font-size: 1.6rem;
+    color: #2c3e50;
     margin-bottom: 10px;
-    color: var(--primary-color);
 }
 
-.upload-area p {
-    color: var(--text-light);
-    margin-bottom: 15px;
+.file-input-wrapper {
+    margin: 20px 0;
 }
 
-#file-input {
-    display: none;
-}
-
-.file-types {
+.file-info {
+    color: #7f8c8d;
     font-size: 0.9rem;
-    color: #888;
-    margin-top: 10px;
-}
-
-.requirements {
-    background-color: #e8f4fd;
-    border-radius: 8px;
-    padding: 20px;
-    border-left: 5px solid var(--zone-color-1);
-}
-
-.requirements h4 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
+    margin-top: 15px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 5px;
 }
 
-.requirements ul {
-    margin-left: 20px;
-    margin-bottom: 15px;
-}
-
-.requirements li {
-    margin-bottom: 8px;
-    padding-left: 5px;
-}
-
-.requirements a {
-    color: var(--primary-color);
-    font-weight: 600;
-    text-decoration: none;
-    background-color: #d1ecf1;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid #bee5eb;
-}
-
-.requirements a:hover {
-    background-color: #bee5eb;
-    text-decoration: none;
-}
-
-/* ส่วนรายงาน */
-.report-section {
-    background: white;
-    border-radius: var(--radius);
-    padding: 30px;
-    box-shadow: var(--shadow);
-    margin-bottom: 40px;
-}
-
-.report-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.report-header h2 {
-    color: var(--primary-color);
-    font-size: 1.8rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.controls {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
+/* ปุ่ม */
 .btn {
-    padding: 10px 20px;
+    padding: 12px 24px;
     border: none;
     border-radius: 6px;
+    font-size: 1rem;
     cursor: pointer;
-    font-weight: 600;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     transition: all 0.3s;
-    font-size: 0.95rem;
+    font-weight: 600;
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
+    background-color: #3498db;
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #0d4d6a;
+    background-color: #2980b9;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-secondary {
-    background-color: var(--secondary-color);
-    color: white;
+    background-color: #ecf0f1;
+    color: #2c3e50;
 }
 
 .btn-secondary:hover {
-    background-color: #38b27c;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-outline {
-    background-color: white;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
-}
-
-.btn-outline:hover {
-    background-color: #f0f5ff;
+    background-color: #d5dbdb;
     transform: translateY(-2px);
 }
 
-/* สถิติสรุป */
-.summary-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: white;
-    border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-    border-top: 5px solid var(--primary-color);
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
+.btn-danger {
+    background-color: #e74c3c;
     color: white;
 }
 
-.stat-content {
-    flex: 1;
+.btn-danger:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
 }
 
-.stat-value {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    line-height: 1;
-}
-
-.stat-label {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin-top: 5px;
-}
-
-/* แท็บ */
-.tabs {
-    display: flex;
-    border-bottom: 2px solid var(--border-color);
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.tab {
-    padding: 12px 25px;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.3s;
-    border-radius: 6px 6px 0 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.tab::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s;
-}
-
-.tab:hover::before {
-    left: 100%;
-}
-
-.tab:hover {
-    color: var(--primary-color);
-    background-color: #f8f9fa;
-}
-
-.tab.active {
-    color: var(--primary-color);
-    border-bottom: 3px solid var(--primary-color);
-    background-color: #f0f7ff;
-}
-
-.tab-content {
-    display: none;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.tab-content.active {
-    display: block;
-}
-
-.tab-content h3 {
-    color: var(--primary-color);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.tab-description {
-    color: var(--text-light);
-    margin-bottom: 20px;
-    font-size: 0.95rem;
-    padding-left: 5px;
-}
-
-/* ตาราง */
-.table-container {
-    overflow-x: auto;
-    margin-top: 15px;
+/* รายละเอียดไฟล์ */
+.file-details {
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.95rem;
-}
-
-thead {
-    background: linear-gradient(to right, var(--primary-color), #2a9d8f);
-    color: white;
-}
-
-th {
-    padding: 16px 12px;
-    text-align: center;
-    font-weight: 600;
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-}
-
-th:last-child {
-    border-right: none;
-}
-
-tbody tr {
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.2s;
-}
-
-tbody tr:nth-child(even) {
+    padding: 20px;
     background-color: #f9f9f9;
 }
 
-tbody tr:hover {
-    background-color: #f0f7ff;
-}
-
-td {
-    padding: 14px 12px;
-    text-align: center;
-}
-
-tfoot {
-    background-color: #f1f8ff;
-    font-weight: 600;
-}
-
-tfoot td {
-    padding: 16px 12px;
-    color: var(--primary-color);
-    border-top: 2px solid var(--primary-color);
-}
-
-/* กราฟขนาดเล็ก */
-.chart-container-small {
-    height: 300px;
-    position: relative;
-    margin-top: 30px;
-    padding: 15px;
-    background-color: white;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-
-/* ตัวกรองและค้นหา */
-.filter-controls {
+.file-header {
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
+    align-items: center;
+    gap: 15px;
     margin-bottom: 20px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    align-items: center;
-}
-
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 200px;
-}
-
-.filter-group label {
-    font-weight: 600;
-    color: var(--primary-color);
-    white-space: nowrap;
-}
-
-#zone-filter, #district-filter {
-    padding: 8px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: white;
-    flex: 1;
-    min-width: 150px;
-}
-
-.search-group {
-    display: flex;
-    align-items: center;
-    position: relative;
-    flex: 2;
-    min-width: 250px;
-}
-
-#search-input {
-    padding: 8px 15px;
-    padding-right: 40px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    width: 100%;
-    font-size: 0.95rem;
-}
-
-#search-btn {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    background: var(--secondary-color);
-    color: white;
-    border: none;
-    border-radius: 0 6px 6px 0;
-    padding: 0 15px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-#search-btn:hover {
-    background-color: #38b27c;
-}
-
-/* การแบ่งหน้า */
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    margin-top: 25px;
     flex-wrap: wrap;
 }
 
-.page-btn {
-    padding: 8px 16px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+.file-header i {
+    font-size: 32px;
+    color: #3498db;
 }
 
-.page-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+.file-header h3 {
+    color: #2c3e50;
+    font-size: 1.4rem;
 }
 
-.page-btn:not(:disabled):hover {
-    background-color: #0d4d6a;
-}
-
-#page-info {
-    font-weight: 600;
-    color: var(--primary-color);
-}
-
-.page-size {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: 20px;
-}
-
-#page-size {
-    padding: 6px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: white;
-}
-
-/* ปุ่มดำเนินการในตาราง */
-.action-btn {
-    padding: 6px 12px;
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
     font-size: 0.85rem;
-    transition: background-color 0.3s;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 5px;
 }
 
-.action-btn:hover {
-    background-color: #38b27c;
+.success {
+    background-color: #d4edda;
+    color: #155724;
 }
 
-/* ส่วนท้าย */
+.file-stats {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+}
+
+.stat i {
+    color: #3498db;
+    font-size: 1.4rem;
+}
+
+/* กริดการดำเนินการ */
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.action-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    border-color: #3498db;
+}
+
+.action-icon {
+    font-size: 40px;
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.action-card h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.action-card p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* คำแนะนำ */
+.tips {
+    list-style: none;
+    padding-left: 0;
+}
+
+.tips li {
+    padding: 10px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.tips i {
+    color: #2ecc71;
+    margin-top: 3px;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #7f8c8d;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: #e74c3c;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+}
+
+/* ตารางตัวอย่างข้อมูล */
+#preview-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#preview-table-container th, 
+#preview-table-container td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+#preview-table-container th {
+    background-color: #f2f2f2;
+    font-weight: 600;
+}
+
+#preview-table-container tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#preview-table-container tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Footer */
 footer {
     text-align: center;
-    padding: 25px;
-    color: var(--text-light);
-    border-top: 1px solid var(--border-color);
-    margin-top: 40px;
-    background-color: #f8f9fa;
-    border-radius: var(--radius);
+    padding: 20px;
+    color: #7f8c8d;
+    margin-top: 30px;
+    border-top: 1px solid #e0e0e0;
 }
 
-footer p {
-    margin-bottom: 8px;
-}
-
-.footer-note {
-    font-size: 0.9rem;
-    color: #999;
-    font-style: italic;
+/* Utility Classes */
+.hidden {
+    display: none !important;
 }
 
 /* Responsive */
-@media (max-width: 992px) {
-    .summary-stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .tabs {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-    }
-    
-    .tab {
-        white-space: nowrap;
-    }
-}
-
 @media (max-width: 768px) {
-    .container {
-        padding: 15px;
+    .action-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     
-    header h1 {
-        font-size: 1.8rem;
+    .action-buttons {
         flex-direction: column;
-        gap: 10px;
-    }
-    
-    .report-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .controls {
-        width: 100%;
-        justify-content: stretch;
     }
     
     .btn {
-        flex: 1;
-        justify-content: center;
-    }
-    
-    .summary-stats {
-        grid-template-columns: 1fr;
-    }
-    
-    .filter-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .filter-group, .search-group {
         width: 100%;
     }
     
-    .chart-container-small {
-        height: 250px;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem;
+    .file-stats {
+        flex-direction: column;
+        gap: 15px;
     }
 }
-
-/* โซนสีในตาราง */
-.zone-1 { border-left: 5px solid var(--zone-color-1); }
-.zone-2 { border-left: 5px solid var(--zone-color-2); }
-.zone-3 { border-left: 5px solid var(--zone-color-3); }
-.zone-4 { border-left: 5px solid var(--zone-color-4); }
-.zone-5 { border-left: 5px solid var(--zone-color-5); }
-
-.zone-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: white;
-}
-
-.zone-1-badge { background-color: var(--zone-color-1); }
-.zone-2-badge { background-color: var(--zone-color-2); }
-.zone-3-badge { background-color: var(--zone-color-3); }
-.zone-4-badge { background-color: var(--zone-color-4); }
-.zone-5-badge { background-color: var(--zone-color-5); }
