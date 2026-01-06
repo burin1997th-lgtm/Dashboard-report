@@ -3,273 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สรุปข้อมูลแปลงที่ดินตามโซนและเขต</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>คำนวณพื้นที่แปลงดินจากไฟล์ CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Sarabun', sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c786c 0%, #004445 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #004445;
+            color: white;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #2c786c;
+            border-color: #2c786c;
+        }
+        .btn-primary:hover {
+            background-color: #004445;
+            border-color: #004445;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table thead {
+            background-color: #f8f9fa;
+        }
+        .zone-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        .progress {
+            height: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            background-color: #2c786c;
+        }
+        .result-card {
+            background-color: #e9f5f3;
+            border-left: 5px solid #2c786c;
+        }
+        .area-total {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #004445;
+        }
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+        .preview-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-map-marked-alt"></i> สรุปข้อมูลแปลงที่ดินตามโซนและเขต</h1>
-            <p class="subtitle">อัปโหลดไฟล์ CSV เพื่อสรุปข้อมูลแปลงที่ดินตามโซนและเขต</p>
-        </header>
+    <div class="container my-5">
+        <!-- Header -->
+        <div class="header text-center">
+            <h1><i class="bi bi-geo-alt"></i> ระบบคำนวณพื้นที่แปลงดิน</h1>
+            <p class="mb-0">อัปโหลดไฟล์ CSV เพื่อคำนวณพื้นที่ตามโซน แสดงผลเป็นรายแปลงและรวมเป็นไร่</p>
+        </div>
 
-        <main>
-            <!-- ส่วนอัปโหลดไฟล์ -->
-            <section class="upload-section">
-                <div class="upload-box">
-                    <div class="upload-area" id="drop-area">
-                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                        <h3>ลากไฟล์ CSV มาวางที่นี่</h3>
-                        <p>หรือคลิกเพื่อเลือกไฟล์จากคอมพิวเตอร์ของคุณ</p>
-                        <input type="file" id="file-input" accept=".csv">
-                        <p class="file-types">รองรับเฉพาะไฟล์ CSV (.csv)</p>
-                    </div>
-                    
-                    <div class="requirements">
-                        <h4><i class="fas fa-info-circle"></i> รูปแบบข้อมูลที่ต้องการ</h4>
-                        <p>ไฟล์ CSV ควรมีคอลัมน์ต่อไปนี้ (ระบบจะพยายามตรวจจับชื่อคอลัมน์อัตโนมัติ):</p>
-                        <ul>
-                            <li><strong>โซน</strong> - รหัสหรือชื่อโซน (Zone)</li>
-                            <li><strong>เขต</strong> - รหัสหรือชื่อเขต (District)</li>
-                            <li><strong>แปลง</strong> - หมายเลขแปลง (Plot)</li>
-                            <li><strong>ไร่</strong> - พื้นที่ (หน่วยไร่)</li>
-                        </ul>
-                        <p>หรือดาวน์โหลดข้อมูลตัวอย่าง: <a href="sample_data.csv" download="sample_data.csv">sample_data.csv</a></p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ส่วนแสดงผลรายงาน -->
-            <section class="report-section" id="report-section" style="display: none;">
-                <div class="report-header">
-                    <h2><i class="fas fa-chart-pie"></i> รายงานสรุปข้อมูลแปลงที่ดิน</h2>
-                    <div class="controls">
-                        <button id="download-summary-btn" class="btn btn-primary">
-                            <i class="fas fa-download"></i> ดาวน์โหลดสรุป
-                        </button>
-                        <button id="download-details-btn" class="btn btn-secondary">
-                            <i class="fas fa-file-csv"></i> ดาวน์โหลดข้อมูลดิบ
-                        </button>
-                        <button id="reset-btn" class="btn btn-outline">
-                            <i class="fas fa-redo"></i> เริ่มใหม่
-                        </button>
-                    </div>
-                </div>
-
-                <!-- สถิติสรุป -->
-                <div class="summary-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-globe-asia"></i>
+        <!-- Upload Section -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-upload"></i> อัปโหลดไฟล์ CSV
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="csvFile" class="form-label required-field">เลือกไฟล์ CSV</label>
+                            <input class="form-control" type="file" id="csvFile" accept=".csv">
+                            <div class="form-text">ไฟล์ CSV ควรมีคอลัมน์สำหรับโซนและพื้นที่ (เช่น โซน, พื้นที่_ตร.ม., พื้นที่_ไร่, ฯลฯ)</div>
                         </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="total-zones">0</div>
-                            <div class="stat-label">จำนวนโซนทั้งหมด</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="total-districts">0</div>
-                            <div class="stat-label">จำนวนเขตทั้งหมด</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="total-plots">0</div>
-                            <div class="stat-label">จำนวนแปลงทั้งหมด</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-vector-square"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value" id="total-area">0</div>
-                            <div class="stat-label">พื้นที่รวม (ไร่)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- แท็บรายงาน -->
-                <div class="tabs">
-                    <button class="tab active" data-tab="zone-summary">สรุปตามโซน</button>
-                    <button class="tab" data-tab="district-summary">สรุปตามเขต</button>
-                    <button class="tab" data-tab="zone-district-summary">สรุปโซน-เขต</button>
-                    <button class="tab" data-tab="details">รายละเอียด</button>
-                </div>
-
-                <!-- รายงานสรุปตามโซน -->
-                <div id="zone-summary" class="tab-content active">
-                    <h3><i class="fas fa-globe"></i> สรุปข้อมูลตามโซน</h3>
-                    <p class="tab-description">แสดงจำนวนแปลงและพื้นที่รวมในแต่ละโซน</p>
-                    
-                    <div class="table-container">
-                        <table id="zone-summary-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2">ลำดับ</th>
-                                    <th rowspan="2">โซน</th>
-                                    <th colspan="2">ข้อมูลแปลงที่ดิน</th>
-                                    <th rowspan="2">สรุปตามเขต</th>
-                                </tr>
-                                <tr>
-                                    <th>จำนวนแปลง</th>
-                                    <th>พื้นที่รวม (ไร่)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
-                            </tbody>
-                            <tfoot>
-                                <tr id="zone-summary-total">
-                                    <!-- ข้อมูลรวมจะถูกเพิ่มโดย JavaScript -->
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    
-                    <div class="chart-container-small">
-                        <canvas id="zone-chart"></canvas>
-                    </div>
-                </div>
-
-                <!-- รายงานสรุปตามเขต -->
-                <div id="district-summary" class="tab-content">
-                    <h3><i class="fas fa-map"></i> สรุปข้อมูลตามเขต</h3>
-                    <p class="tab-description">แสดงจำนวนแปลงและพื้นที่รวมในแต่ละเขต</p>
-                    
-                    <div class="table-container">
-                        <table id="district-summary-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2">ลำดับ</th>
-                                    <th rowspan="2">เขต</th>
-                                    <th colspan="2">ข้อมูลแปลงที่ดิน</th>
-                                    <th rowspan="2">พื้นที่เฉลี่ยต่อแปลง (ไร่)</th>
-                                    <th rowspan="2">ดูรายละเอียด</th>
-                                </tr>
-                                <tr>
-                                    <th>จำนวนแปลง</th>
-                                    <th>พื้นที่รวม (ไร่)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
-                            </tbody>
-                            <tfoot>
-                                <tr id="district-summary-total">
-                                    <!-- ข้อมูลรวมจะถูกเพิ่มโดย JavaScript -->
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    
-                    <div class="chart-container-small">
-                        <canvas id="district-chart"></canvas>
-                    </div>
-                </div>
-
-                <!-- รายงานสรุปตามโซนและเขต -->
-                <div id="zone-district-summary" class="tab-content">
-                    <h3><i class="fas fa-th-large"></i> สรุปข้อมูลตามโซนและเขต</h3>
-                    <p class="tab-description">แสดงรายละเอียดข้อมูลแยกตามโซนและเขต</p>
-                    
-                    <div class="table-container">
-                        <table id="zone-district-summary-table">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2">ลำดับ</th>
-                                    <th rowspan="2">โซน</th>
-                                    <th rowspan="2">เขต</th>
-                                    <th colspan="2">ข้อมูลแปลงที่ดิน</th>
-                                    <th rowspan="2">พื้นที่เฉลี่ยต่อแปลง (ไร่)</th>
-                                </tr>
-                                <tr>
-                                    <th>จำนวนแปลง</th>
-                                    <th>พื้นที่รวม (ไร่)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- รายงานรายละเอียดข้อมูล -->
-                <div id="details" class="tab-content">
-                    <h3><i class="fas fa-list"></i> รายละเอียดข้อมูลทั้งหมด</h3>
-                    <p class="tab-description">แสดงข้อมูลดิบทั้งหมด พร้อมระบบกรองและค้นหา</p>
-                    
-                    <div class="filter-controls">
-                        <div class="filter-group">
-                            <label for="zone-filter"><i class="fas fa-filter"></i> กรองตามโซน:</label>
-                            <select id="zone-filter">
-                                <option value="all">แสดงทั้งหมด</option>
+                        
+                        <div class="mb-3">
+                            <label class="form-label required-field">เลือกคอลัมน์โซน</label>
+                            <select class="form-select" id="zoneColumn">
+                                <option value="">เลือกคอลัมน์โซน</option>
+                                <!-- Options will be populated after file upload -->
                             </select>
                         </div>
-                        <div class="filter-group">
-                            <label for="district-filter"><i class="fas fa-filter"></i> กรองตามเขต:</label>
-                            <select id="district-filter">
-                                <option value="all">แสดงทั้งหมด</option>
+                        
+                        <div class="mb-3">
+                            <label class="form-label required-field">เลือกคอลัมน์พื้นที่</label>
+                            <select class="form-select" id="areaColumn">
+                                <option value="">เลือกคอลัมน์พื้นที่</option>
+                                <!-- Options will be populated after file upload -->
                             </select>
+                            <div class="form-text">เลือกคอลัมน์ที่มีพื้นที่แปลง (หน่วยควรเป็นตร.ม. หรือ ไร่)</div>
                         </div>
-                        <div class="search-group">
-                            <input type="text" id="search-input" placeholder="ค้นหาแปลงหรือข้อมูล...">
-                            <button id="search-btn"><i class="fas fa-search"></i></button>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">หน่วยของพื้นที่ในไฟล์</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="areaUnit" id="unitSqm" value="sqm" checked>
+                                    <label class="form-check-label" for="unitSqm">ตารางเมตร (ตร.ม.)</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="areaUnit" id="unitRai" value="rai">
+                                    <label class="form-check-label" for="unitRai">ไร่</label>
+                                </div>
+                            </div>
                         </div>
+                        
+                        <button type="button" class="btn btn-primary btn-lg w-100" id="calculateBtn">
+                            <i class="bi bi-calculator"></i> คำนวณพื้นที่
+                        </button>
                     </div>
                     
-                    <div class="table-container">
-                        <table id="details-table">
-                            <thead>
-                                <!-- หัวตารางจะถูกเพิ่มโดย JavaScript -->
-                            </thead>
-                            <tbody>
-                                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="pagination">
-                        <button id="prev-page" class="page-btn" disabled>
-                            <i class="fas fa-chevron-left"></i> ก่อนหน้า
-                        </button>
-                        <span id="page-info">หน้า 1 จาก 1</span>
-                        <button id="next-page" class="page-btn" disabled>
-                            ถัดไป <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <div class="page-size">
-                            <label for="page-size">แสดง:</label>
-                            <select id="page-size">
-                                <option value="10">10 แถว</option>
-                                <option value="25" selected>25 แถว</option>
-                                <option value="50">50 แถว</option>
-                                <option value="100">100 แถว</option>
-                            </select>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">ตัวอย่างข้อมูลไฟล์ CSV</label>
+                            <div class="preview-table border rounded p-2">
+                                <table class="table table-sm" id="previewTable">
+                                    <thead>
+                                        <tr>
+                                            <th>รหัสแปลง</th>
+                                            <th>โซน</th>
+                                            <th>พื้นที่_ตร.ม.</th>
+                                            <th>เจ้าของ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>A001</td>
+                                            <td>โซน A</td>
+                                            <td>1600</td>
+                                            <td>สมชาย</td>
+                                        </tr>
+                                        <tr>
+                                            <td>A002</td>
+                                            <td>โซน A</td>
+                                            <td>2400</td>
+                                            <td>สมหญิง</td>
+                                        </tr>
+                                        <tr>
+                                            <td>B001</td>
+                                            <td>โซน B</td>
+                                            <td>3200</td>
+                                            <td>สมหมาย</td>
+                                        </tr>
+                                        <tr>
+                                            <td>B002</td>
+                                            <td>โซน B</td>
+                                            <td>800</td>
+                                            <td>สมทรง</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-text">ตัวอย่างไฟล์ CSV ควรมีรูปแบบคล้ายกับตารางนี้</div>
                         </div>
                     </div>
                 </div>
-            </section>
-        </main>
+                
+                <!-- Progress Bar (Initially Hidden) -->
+                <div class="progress mt-3" id="progressBar" style="display: none;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
 
-        <footer>
-            <p><i class="fas fa-code"></i> พัฒนาด้วย HTML, CSS และ JavaScript | สำหรับใช้งานบน GitHub Pages</p>
-            <p class="footer-note">ระบบสรุปข้อมูลแปลงที่ดินตามโซนและเขต</p>
-        </footer>
+        <!-- Results Section (Initially Hidden) -->
+        <div id="resultsSection" style="display: none;">
+            <!-- Summary Card -->
+            <div class="card result-card">
+                <div class="card-header">
+                    <i class="bi bi-graph-up"></i> สรุปผลการคำนวณ
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <h5>จำนวนแปลงทั้งหมด</h5>
+                            <div class="area-total" id="totalPlots">0</div>
+                            <div>แปลง</div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h5>พื้นที่รวมทั้งหมด</h5>
+                            <div class="area-total" id="totalArea">0</div>
+                            <div>ไร่</div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h5>จำนวนโซน</h5>
+                            <div class="area-total" id="totalZones">0</div>
+                            <div>โซน</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-pie-chart"></i> สรุปพื้นที่ตามโซน
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped" id="zoneSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>โซน</th>
+                                <th>จำนวนแปลง</th>
+                                <th>พื้นที่รวม (ไร่)</th>
+                                <th>พื้นที่รวม (ตร.ม.)</th>
+                                <th>ร้อยละ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Zone summary rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Plot Details -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-table"></i> รายละเอียดแปลงทั้งหมด
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="plotDetailsTable">
+                            <thead>
+                                <tr>
+                                    <th>ลำดับ</th>
+                                    <th>รหัสแปลง</th>
+                                    <th>โซน</th>
+                                    <th>พื้นที่ (ไร่)</th>
+                                    <th>พื้นที่ (ตร.ม.)</th>
+                                    <th>หมายเหตุ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Plot detail rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-between mt-3">
+                <button type="button" class="btn btn-outline-secondary" id="resetBtn">
+                    <i class="bi bi-arrow-clockwise"></i> รีเซ็ต
+                </button>
+                <div>
+                    <button type="button" class="btn btn-success" id="exportCsvBtn">
+                        <i class="bi bi-download"></i> ดาวน์โหลด CSV
+                    </button>
+                    <button type="button" class="btn btn-primary" id="printBtn">
+                        <i class="bi bi-printer"></i> พิมพ์รายงาน
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- โหลดไลบรารีที่จำเป็น -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Footer -->
+    <footer class="text-center text-muted py-4">
+        <p>ระบบคำนวณพื้นที่แปลงดิน &copy; 2023 | 1 ไร่ = 1600 ตารางเมตร</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
