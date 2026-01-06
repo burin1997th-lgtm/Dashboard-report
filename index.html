@@ -3,203 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบอัปโหลดและวิเคราะห์ไฟล์ CSV</title>
+    <title>ระบบวิเคราะห์ข้อมูลอ้อยนำส่ง ปี 68/69</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1><i class="fas fa-file-csv"></i> ระบบอัปโหลดไฟล์ CSV</h1>
-            <p class="subtitle">อัปโหลดไฟล์ CSV เพื่อดูข้อมูลและวิเคราะห์</p>
+        <header class="main-header">
+            <div class="header-content">
+                <h1><i class="fas fa-tractor"></i> รายงานสถานะอ้อยนำส่ง ปี 68/69</h1>
+                <p class="subtitle">ระบบวิเคราะห์ข้อมูลตามเขต (โซน) - วันที่ 6 มกราคม 2569</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-card">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <h3>12</h3>
+                        <p>เขต/โซน</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <h3>4,598</h3>
+                        <p>ผู้ปลูกทั้งหมด</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-weight-hanging"></i>
+                    <div>
+                        <h3>1.76 ล้านตัน</h3>
+                        <p>ผลผลิตทั้งหมด</p>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <main>
-            <!-- ส่วนอัปโหลดไฟล์ -->
-            <section id="upload-section" class="card">
-                <h2><i class="fas fa-cloud-upload-alt"></i> อัปโหลดไฟล์ CSV</h2>
-                
-                <div class="upload-area" id="drop-area">
-                    <div class="upload-icon">
-                        <i class="fas fa-file-upload"></i>
+            <!-- ส่วนควบคุมและฟิลเตอร์ -->
+            <section class="card control-section">
+                <h2><i class="fas fa-sliders-h"></i> ควบคุมการแสดงผล</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="zone-filter"><i class="fas fa-filter"></i> กรองตามเขต:</label>
+                        <select id="zone-filter" class="form-select">
+                            <option value="all">แสดงทั้งหมด (12 เขต)</option>
+                            <option value="1">เขต 1</option>
+                            <option value="2">เขต 2</option>
+                            <option value="3">เขต 3</option>
+                            <option value="4">เขต 4</option>
+                            <option value="5">เขต 5</option>
+                            <option value="6">เขต 6</option>
+                            <option value="7">เขต 7</option>
+                            <option value="8">เขต 8</option>
+                            <option value="10">เขต 10</option>
+                            <option value="11">เขต 11</option>
+                            <option value="12">เขต 12</option>
+                            <option value="21">เขต 21</option>
+                        </select>
                     </div>
-                    <h3>ลากไฟล์ CSV มาวางที่นี่</h3>
-                    <p>หรือคลิกปุ่มด้านล่างเพื่อเลือกไฟล์จากคอมพิวเตอร์</p>
-                    
-                    <div class="file-input-wrapper">
-                        <input type="file" id="file-input" accept=".csv, text/csv" hidden>
-                        <label for="file-input" class="btn btn-primary">
-                            <i class="fas fa-folder-open"></i> เลือกไฟล์ CSV
-                        </label>
+                    <div class="control-group">
+                        <label for="metric-select"><i class="fas fa-chart-line"></i> ตัวชี้วัด:</label>
+                        <select id="metric-select" class="form-select">
+                            <option value="percentage">เปอร์เซ็นต์อ้อยนำส่ง</option>
+                            <option value="tonnage">ปริมาณอ้อยนำส่ง (ตัน)</option>
+                            <option value="area">พื้นที่ปลูก (ไร่)</option>
+                            <option value="farmers">จำนวนผู้ปลูก</option>
+                            <option value="brix">ค่า Brix</option>
+                        </select>
                     </div>
-                    
-                    <p class="file-info">
-                        <i class="fas fa-info-circle"></i> รองรับเฉพาะไฟล์ .csv (ขนาดไม่เกิน 10MB)
-                    </p>
-                </div>
-
-                <div class="upload-progress hidden" id="upload-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill"></div>
-                    </div>
-                    <p class="progress-text" id="progress-text">กำลังอัปโหลด...</p>
-                </div>
-            </section>
-
-            <!-- ส่วนแสดงสถานะไฟล์ -->
-            <section id="file-info-section" class="card hidden">
-                <h2><i class="fas fa-file-alt"></i> ไฟล์ที่อัปโหลดแล้ว</h2>
-                
-                <div class="file-details">
-                    <div class="file-header">
-                        <i class="fas fa-file-csv"></i>
-                        <h3 id="file-name">-</h3>
-                        <span class="status-badge success" id="upload-status">
-                            <i class="fas fa-check-circle"></i> อัปโหลดสำเร็จ
-                        </span>
-                    </div>
-                    
-                    <div class="file-stats">
-                        <div class="stat">
-                            <i class="fas fa-columns"></i>
-                            <span id="column-count">0</span> คอลัมน์
-                        </div>
-                        <div class="stat">
-                            <i class="fas fa-list"></i>
-                            <span id="row-count">0</span> แถว
-                        </div>
-                        <div class="stat">
-                            <i class="fas fa-database"></i>
-                            <span id="file-size">0</span> MB
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ส่วนขั้นตอนต่อไป -->
-            <section id="next-steps-section" class="card hidden">
-                <h2><i class="fas fa-play-circle"></i> ขั้นตอนต่อไป</h2>
-                <p class="section-subtitle">เลือกอย่างใดอย่างหนึ่งเพื่อดำเนินการกับข้อมูลของคุณ</p>
-                
-                <div class="action-grid">
-                    <div class="action-card" data-action="preview">
-                        <div class="action-icon">
-                            <i class="fas fa-eye"></i>
-                        </div>
-                        <h3>ดูตัวอย่างข้อมูล</h3>
-                        <p>แสดง 10 แถวแรกของข้อมูล</p>
-                    </div>
-                    
-                    <div class="action-card" data-action="analyze">
-                        <div class="action-icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <h3>วิเคราะห์ข้อมูล</h3>
-                        <p>ดูสถิติพื้นฐานของแต่ละคอลัมน์</p>
-                    </div>
-                    
-                    <div class="action-card" data-action="download">
-                        <div class="action-icon">
-                            <i class="fas fa-download"></i>
-                        </div>
-                        <h3>ดาวน์โหลดข้อมูล</h3>
-                        <p>บันทึกข้อมูลที่ประมวลผลแล้ว</p>
-                    </div>
-                    
-                    <div class="action-card" data-action="delete">
-                        <div class="action-icon">
-                            <i class="fas fa-trash-alt"></i>
-                        </div>
-                        <h3>ลบไฟล์นี้</h3>
-                        <p>ลบออกจากระบบ</p>
-                    </div>
-                </div>
-                
-                <div class="action-buttons">
-                    <button class="btn btn-secondary" id="preview-btn">
-                        <i class="fas fa-eye"></i> ดูตัวอย่าง
-                    </button>
-                    <button class="btn btn-secondary" id="analyze-btn">
-                        <i class="fas fa-chart-bar"></i> วิเคราะห์
-                    </button>
-                    <button class="btn btn-secondary" id="download-btn">
-                        <i class="fas fa-download"></i> ดาวน์โหลด
-                    </button>
-                    <button class="btn btn-danger" id="delete-btn">
-                        <i class="fas fa-trash-alt"></i> ลบไฟล์
+                    <button id="analyze-btn" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> วิเคราะห์ข้อมูล
                     </button>
                 </div>
             </section>
 
-            <!-- ตัวอย่างข้อมูล CSV สำหรับทดสอบ -->
-            <section id="sample-section" class="card">
-                <h2><i class="fas fa-vial"></i> ทดสอบระบบ</h2>
-                <p>หากไม่มีไฟล์ CSV ให้ทดสอบ คุณสามารถใช้ไฟล์ตัวอย่างนี้:</p>
-                
-                <div class="sample-actions">
-                    <button class="btn btn-outline" id="create-sample-btn">
-                        <i class="fas fa-plus-circle"></i> สร้างไฟล์ CSV ตัวอย่าง
-                    </button>
-                    <button class="btn btn-outline" id="download-sample-btn">
-                        <i class="fas fa-download"></i> ดาวน์โหลดไฟล์ตัวอย่าง
-                    </button>
-                </div>
-                
-                <div class="sample-preview hidden" id="sample-preview">
-                    <h4>ตัวอย่างข้อมูล:</h4>
-                    <pre id="sample-data"></pre>
+            <!-- สรุปข้อมูลโดยรวม -->
+            <section class="card summary-section">
+                <h2><i class="fas fa-chart-pie"></i> สรุปภาพรวม</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-icon" style="background-color: #3498db;">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3>21.7%</h3>
+                            <p>อ้อยนำส่งโดยเฉลี่ย</p>
+                            <small>จากทั้งหมด 12 เขต</small>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-icon" style="background-color: #2ecc71;">
+                            <i class="fas fa-weight-hanging"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3>230,398 ตัน</h3>
+                            <p>อ้อยนำส่งทั้งหมด</p>
+                            <small>จากผลผลิต 1.76 ล้านตัน</small>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-icon" style="background-color: #9b59b6;">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3>177,222 ไร่</h3>
+                            <p>พื้นที่ปลูกทั้งหมด</p>
+                            <small>จาก 16,829 แปลง</small>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-icon" style="background-color: #e74c3c;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="summary-content">
+                            <h3>1,035 ราย</h3>
+                            <p>ผู้ปลูกที่นำส่งแล้ว</p>
+                            <small>จาก 4,598 รายทั้งหมด</small>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- ส่วนแสดงตัวอย่างข้อมูล -->
-            <section id="preview-section" class="card hidden">
-                <h2><i class="fas fa-table"></i> ตัวอย่างข้อมูล</h2>
-                <div id="data-preview">
-                    <p>กรุณาอัปโหลดไฟล์เพื่อดูข้อมูล</p>
+            <!-- กราฟแสดงผล -->
+            <div class="charts-grid">
+                <section class="card chart-section">
+                    <h2><i class="fas fa-chart-bar"></i> อ้อยนำส่งแบ่งตามเขต</h2>
+                    <div class="chart-container">
+                        <canvas id="zoneBarChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="legend-color" style="background-color: #3498db;"></span> เปอร์เซ็นต์อ้อยนำส่ง (%)</span>
+                        <span class="legend-item"><span class="legend-color" style="background-color: #2ecc71;"></span> ปริมาณอ้อยนำส่ง (ตัน)</span>
+                    </div>
+                </section>
+
+                <section class="card chart-section">
+                    <h2><i class="fas fa-chart-pie"></i> สัดส่วนอ้อยนำส่งทั้งหมด</h2>
+                    <div class="chart-container">
+                        <canvas id="percentagePieChart"></canvas>
+                    </div>
+                    <div class="chart-info">
+                        <p>เขตที่มีอัตรานำส่งสูงสุด: <strong>เขต 3 (30%)</strong></p>
+                        <p>เขตที่มีอัตรานำส่งต่ำสุด: <strong>เขต 8 (8%)</strong></p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ตารางข้อมูลตามโซน -->
+            <section class="card data-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-table"></i> ข้อมูลรายเขต (โซน)</h2>
+                    <div class="export-buttons">
+                        <button class="btn btn-outline" id="export-csv">
+                            <i class="fas fa-file-csv"></i> ส่งออก CSV
+                        </button>
+                        <button class="btn btn-outline" id="export-pdf">
+                            <i class="fas fa-file-pdf"></i> ส่งออก PDF
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table" id="zone-data-table">
+                        <thead>
+                            <tr>
+                                <th>เขต</th>
+                                <th>ผู้ปลูกทั้งหมด</th>
+                                <th>แปลงทั้งหมด</th>
+                                <th>พื้นที่ (ไร่)</th>
+                                <th>ผลผลิต (ตัน)</th>
+                                <th>ผู้ปลูกนำส่ง</th>
+                                <th>อ้อยนำส่ง (%)</th>
+                                <th>ปริมาณนำส่ง (ตัน)</th>
+                                <th>วัด Brix</th>
+                                <th>ไม่วัด Brix</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="zone-table-body">
+                            <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-total">
+                                <td>รวมทั้งหมด</td>
+                                <td>4,598</td>
+                                <td>16,829</td>
+                                <td>177,222</td>
+                                <td>1,758,788</td>
+                                <td>1,035</td>
+                                <td>22.5%</td>
+                                <td>230,398</td>
+                                <td>536</td>
+                                <td>549</td>
+                                <td>-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="table-actions">
+                    <div class="table-info">
+                        <p>แสดงข้อมูล 12 เขต (โซน) จากทั้งหมด 12 เขต</p>
+                    </div>
+                    <div class="table-pagination">
+                        <button class="btn btn-sm" disabled>ก่อนหน้า</button>
+                        <span>หน้า 1/1</span>
+                        <button class="btn btn-sm" disabled>ถัดไป</button>
+                    </div>
                 </div>
             </section>
 
-            <!-- ส่วนคำแนะนำ -->
-            <section id="help-section" class="card">
-                <h2><i class="fas fa-question-circle"></i> คำแนะนำการใช้งาน</h2>
-                <div class="help-steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h4>อัปโหลดไฟล์ CSV</h4>
-                            <p>ลากไฟล์มาวางในพื้นที่สีฟ้า หรือคลิกปุ่ม "เลือกไฟล์ CSV"</p>
+            <!-- การวิเคราะห์เชิงลึก -->
+            <section class="card analysis-section">
+                <h2><i class="fas fa-search-analysis"></i> การวิเคราะห์เชิงลึก</h2>
+                
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <div class="analysis-header">
+                            <i class="fas fa-medal" style="color: #f1c40f;"></i>
+                            <h3>เขตที่มีประสิทธิภาพสูง</h3>
+                        </div>
+                        <div class="analysis-content">
+                            <p><strong>เขต 3</strong> มีอัตรานำส่งสูงสุดที่ <span class="highlight">30%</span> ด้วยปริมาณนำส่ง 28,790 ตัน</p>
+                            <p><strong>เขต 2</strong> มีปริมาณนำส่งมากสุดที่ <span class="highlight">34,766 ตัน</span> (16% ของผลผลิตเขต)</p>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h4>ตรวจสอบข้อมูล</h4>
-                            <p>ระบบจะแสดงข้อมูลไฟล์และสรุปจำนวนแถว/คอลัมน์</p>
+                    
+                    <div class="analysis-card">
+                        <div class="analysis-header">
+                            <i class="fas fa-exclamation-triangle" style="color: #e74c3c;"></i>
+                            <h3>เขตที่ต้องการการสนับสนุน</h3>
+                        </div>
+                        <div class="analysis-content">
+                            <p><strong>เขต 8</strong> มีอัตรานำส่งต่ำสุดที่ <span class="highlight">8%</span> เท่านั้น</p>
+                            <p><strong>เขต 4</strong> มีอัตรานำส่งเพียง <span class="highlight">14%</span> และปริมาณนำส่ง 10,183 ตัน</p>
                         </div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h4>ดำเนินการกับข้อมูล</h4>
-                            <p>ใช้ปุ่มต่างๆ เพื่อดูตัวอย่าง วิเคราะห์ หรือดาวน์โหลดข้อมูล</p>
+                    
+                    <div class="analysis-card">
+                        <div class="analysis-header">
+                            <i class="fas fa-chart-line" style="color: #2ecc71;"></i>
+                            <h3>แนวโน้มโดยรวม</h3>
+                        </div>
+                        <div class="analysis-content">
+                            <p>อัตราการนำส่งเฉลี่ยทั่วทุกเขต: <span class="highlight">21.7%</span></p>
+                            <p>ปริมาณนำส่งเฉลี่ยต่อเขต: <span class="highlight">19,200 ตัน</span></p>
+                            <p>อ้อยที่วัด Brix: <span class="highlight">49.4%</span> ของทั้งหมด</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="tips">
-                    <h4><i class="fas fa-lightbulb"></i> เคล็ดลับ</h4>
+                <div class="recommendations">
+                    <h3><i class="fas fa-lightbulb"></i> ข้อเสนอแนะ</h3>
                     <ul>
-                        <li>ไฟล์ CSV ควรมีหัวตารางในแถวแรก</li>
-                        <li>รองรับไฟล์ที่มีอักขระภาษาไทยและภาษาอังกฤษ</li>
-                        <li>คุณสามารถทดสอบระบบด้วยการสร้างไฟล์ตัวอย่าง</li>
+                        <li>ควรเพิ่มการสนับสนุนในเขต 4 และ 8 เพื่อเพิ่มอัตราการนำส่ง</li>
+                        <li>ส่งเสริมการวัดค่า Brix ในเขตที่ยังวัดน้อย (เขต 12, 8)</li>
+                        <li>เขต 2 มีศักยภาพในการเพิ่มอัตราการนำส่งได้อีก</li>
                     </ul>
                 </div>
             </section>
         </main>
 
         <footer>
-            <p>ระบบอัปโหลดไฟล์ CSV | เวอร์ชัน 2.0 | ใช้งานได้ทันทีบนเบราว์เซอร์</p>
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-tractor"></i>
+                    <h3>ระบบวิเคราะห์ข้อมูลอ้อยนำส่ง</h3>
+                </div>
+                <div class="footer-info">
+                    <p>ข้อมูล ณ วันที่ 6 มกราคม 2569</p>
+                    <p>ปีการผลิต 68/69 | อัปเดตล่าสุด: 6/01/2569</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 ระบบวิเคราะห์ข้อมูลอ้อยนำส่ง | พัฒนาด้วย HTML, CSS, JavaScript และ Chart.js</p>
+            </div>
         </footer>
+    </div>
+
+    <!-- Modal สำหรับแสดงรายละเอียดเขต -->
+    <div id="zone-detail-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-map-marker-alt"></i> รายละเอียดเขต <span id="modal-zone-number"></span></h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="zone-detail-content">
+                <!-- ข้อมูลจะถูกเพิ่มโดย JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal">ปิด</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
