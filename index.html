@@ -3,295 +3,685 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คำนวณพื้นที่แปลงดินจากไฟล์ CSV</title>
+    <title>ระบบสรุปข้อมูลจากตารางตามโซน</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #2c786c;
+            --secondary-color: #004445;
+            --accent-color: #f8b400;
+            --light-bg: #f8f9fa;
+            --dark-text: #333333;
+        }
+        
         body {
-            background-color: #f8f9fa;
+            background-color: #f5f7fa;
             font-family: 'Sarabun', sans-serif;
+            color: var(--dark-text);
         }
-        .container {
-            max-width: 1200px;
+        
+        .container-fluid {
+            max-width: 1400px;
         }
+        
         .header {
-            background: linear-gradient(135deg, #2c786c 0%, #004445 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .card-header {
-            background-color: #004445;
-            color: white;
-            font-weight: bold;
-            border-radius: 10px 10px 0 0 !important;
-        }
-        .btn-primary {
-            background-color: #2c786c;
-            border-color: #2c786c;
-        }
-        .btn-primary:hover {
-            background-color: #004445;
-            border-color: #004445;
-        }
-        .table {
-            margin-bottom: 0;
-        }
-        .table thead {
-            background-color: #f8f9fa;
-        }
-        .zone-badge {
-            font-size: 0.8rem;
-            padding: 5px 10px;
-            border-radius: 20px;
-        }
-        .progress {
-            height: 25px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
         }
-        .progress-bar {
-            background-color: #2c786c;
+        
+        .card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            transition: transform 0.3s ease;
         }
-        .result-card {
-            background-color: #e9f5f3;
-            border-left: 5px solid #2c786c;
+        
+        .card:hover {
+            transform: translateY(-5px);
         }
-        .area-total {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #004445;
+        
+        .card-header {
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: 600;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .required-field::after {
-            content: " *";
-            color: #dc3545;
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 10px 20px;
+            font-weight: 500;
         }
-        .preview-table {
-            max-height: 400px;
-            overflow-y: auto;
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-left: 5px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 20px;
+            height: 100%;
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .zone-badge {
+            font-size: 0.85rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .table-custom {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: white;
+        }
+        
+        .table-custom thead {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .table-custom th {
+            border: none;
+            padding: 15px;
+            font-weight: 600;
+        }
+        
+        .table-custom td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+        
+        .table-custom tbody tr {
+            transition: background-color 0.2s;
+        }
+        
+        .table-custom tbody tr:hover {
+            background-color: rgba(44, 120, 108, 0.05);
+        }
+        
+        .progress-custom {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar-custom {
+            background-color: var(--primary-color);
+            border-radius: 5px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .tab-content {
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+        }
+        
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--secondary-color);
+            font-weight: 500;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: white;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #ced4da;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(44, 120, 108, 0.25);
+        }
+        
+        .dataTables_wrapper {
+            padding: 0;
+        }
+        
+        .dataTables_length select {
+            border-radius: 6px;
+        }
+        
+        .footer {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container my-5">
+    <div class="container-fluid py-4">
         <!-- Header -->
-        <div class="header text-center">
-            <h1><i class="bi bi-geo-alt"></i> ระบบคำนวณพื้นที่แปลงดิน</h1>
-            <p class="mb-0">อัปโหลดไฟล์ CSV เพื่อคำนวณพื้นที่ตามโซน แสดงผลเป็นรายแปลงและรวมเป็นไร่</p>
-        </div>
-
-        <!-- Upload Section -->
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-upload"></i> อัปโหลดไฟล์ CSV
+        <div class="header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2"><i class="bi bi-table"></i> ระบบสรุปข้อมูลจากตารางตามโซน</h1>
+                    <p class="mb-0">นำเข้าข้อมูลจากตาราง สรุปผลตามโซน แสดงสถิติ และรายงานสรุป</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <button class="btn btn-light btn-lg" id="helpBtn">
+                        <i class="bi bi-question-circle"></i> คู่มือการใช้งาน
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="csvFile" class="form-label required-field">เลือกไฟล์ CSV</label>
-                            <input class="form-control" type="file" id="csvFile" accept=".csv">
-                            <div class="form-text">ไฟล์ CSV ควรมีคอลัมน์สำหรับโซนและพื้นที่ (เช่น โซน, พื้นที่_ตร.ม., พื้นที่_ไร่, ฯลฯ)</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label required-field">เลือกคอลัมน์โซน</label>
-                            <select class="form-select" id="zoneColumn">
-                                <option value="">เลือกคอลัมน์โซน</option>
-                                <!-- Options will be populated after file upload -->
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label required-field">เลือกคอลัมน์พื้นที่</label>
-                            <select class="form-select" id="areaColumn">
-                                <option value="">เลือกคอลัมน์พื้นที่</option>
-                                <!-- Options will be populated after file upload -->
-                            </select>
-                            <div class="form-text">เลือกคอลัมน์ที่มีพื้นที่แปลง (หน่วยควรเป็นตร.ม. หรือ ไร่)</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">หน่วยของพื้นที่ในไฟล์</label>
-                            <div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="areaUnit" id="unitSqm" value="sqm" checked>
-                                    <label class="form-check-label" for="unitSqm">ตารางเมตร (ตร.ม.)</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="areaUnit" id="unitRai" value="rai">
-                                    <label class="form-check-label" for="unitRai">ไร่</label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="button" class="btn btn-primary btn-lg w-100" id="calculateBtn">
-                            <i class="bi bi-calculator"></i> คำนวณพื้นที่
-                        </button>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Column: Input and Controls -->
+            <div class="col-lg-4">
+                <!-- Data Input Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-upload"></i> นำเข้าข้อมูล
                     </div>
-                    
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">ตัวอย่างข้อมูลไฟล์ CSV</label>
-                            <div class="preview-table border rounded p-2">
-                                <table class="table table-sm" id="previewTable">
-                                    <thead>
-                                        <tr>
-                                            <th>รหัสแปลง</th>
-                                            <th>โซน</th>
-                                            <th>พื้นที่_ตร.ม.</th>
-                                            <th>เจ้าของ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>A001</td>
-                                            <td>โซน A</td>
-                                            <td>1600</td>
-                                            <td>สมชาย</td>
-                                        </tr>
-                                        <tr>
-                                            <td>A002</td>
-                                            <td>โซน A</td>
-                                            <td>2400</td>
-                                            <td>สมหญิง</td>
-                                        </tr>
-                                        <tr>
-                                            <td>B001</td>
-                                            <td>โซน B</td>
-                                            <td>3200</td>
-                                            <td>สมหมาย</td>
-                                        </tr>
-                                        <tr>
-                                            <td>B002</td>
-                                            <td>โซน B</td>
-                                            <td>800</td>
-                                            <td>สมทรง</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                    <div class="card-body">
+                        <!-- Data Input Options -->
+                        <ul class="nav nav-tabs mb-3" id="dataInputTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button" role="tab">
+                                    <i class="bi bi-keyboard"></i> กรอกข้อมูล
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv" type="button" role="tab">
+                                    <i class="bi bi-file-earmark-spreadsheet"></i> อัปโหลด CSV
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="dataInputTabContent">
+                            <!-- Manual Input Tab -->
+                            <div class="tab-pane fade show active" id="manual" role="tabpanel">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">เพิ่มข้อมูลด้วยตนเอง</label>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="plotId" placeholder="รหัสแปลง (เช่น A001)">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="zone" placeholder="โซน (เช่น A, B, C)">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="number" class="form-control" id="area" placeholder="พื้นที่ (ตร.ม.)" step="0.01">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" id="owner" placeholder="เจ้าของ">
+                                        </div>
+                                        <div class="col-md-12">
+                                            <select class="form-select" id="cropType">
+                                                <option value="">เลือกประเภทพืช</option>
+                                                <option value="ข้าว">ข้าว</option>
+                                                <option value="อ้อย">อ้อย</option>
+                                                <option value="มันสำปะหลัง">มันสำปะหลัง</option>
+                                                <option value="ยางพารา">ยางพารา</option>
+                                                <option value="ปาล์มน้ำมัน">ปาล์มน้ำมัน</option>
+                                                <option value="อื่นๆ">อื่นๆ</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary w-100" id="addRowBtn">
+                                        <i class="bi bi-plus-circle"></i> เพิ่มข้อมูล
+                                    </button>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">ตัวอย่างข้อมูล (ทดสอบ)</label>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" id="loadSampleData">
+                                            <i class="bi bi-download"></i> โหลดข้อมูลตัวอย่าง
+                                        </button>
+                                        <button class="btn btn-outline-secondary" id="clearTableBtn">
+                                            <i class="bi bi-trash"></i> ล้างข้อมูลทั้งหมด
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-text">ตัวอย่างไฟล์ CSV ควรมีรูปแบบคล้ายกับตารางนี้</div>
+                            
+                            <!-- CSV Upload Tab -->
+                            <div class="tab-pane fade" id="csv" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="csvFile" class="form-label fw-bold">เลือกไฟล์ CSV</label>
+                                    <input class="form-control" type="file" id="csvFile" accept=".csv">
+                                    <div class="form-text mt-2">
+                                        รูปแบบไฟล์ CSV: ควรมีคอลัมน์สำหรับรหัสแปลง, โซน, พื้นที่, เจ้าของ, ประเภทพืช
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">หรือวางข้อมูล CSV ตรงนี้</label>
+                                    <textarea class="form-control" id="csvText" rows="5" placeholder="วางข้อมูล CSV ที่นี่ (เช่น รหัสแปลง,โซน,พื้นที่,เจ้าของ,ประเภทพืช)"></textarea>
+                                </div>
+                                
+                                <button class="btn btn-primary w-100" id="importCsvBtn">
+                                    <i class="bi bi-upload"></i> นำเข้าไฟล์ CSV
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Progress Bar (Initially Hidden) -->
-                <div class="progress mt-3" id="progressBar" style="display: none;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Results Section (Initially Hidden) -->
-        <div id="resultsSection" style="display: none;">
-            <!-- Summary Card -->
-            <div class="card result-card">
-                <div class="card-header">
-                    <i class="bi bi-graph-up"></i> สรุปผลการคำนวณ
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <h5>จำนวนแปลงทั้งหมด</h5>
-                            <div class="area-total" id="totalPlots">0</div>
-                            <div>แปลง</div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <h5>พื้นที่รวมทั้งหมด</h5>
-                            <div class="area-total" id="totalArea">0</div>
-                            <div>ไร่</div>
-                        </div>
-                        <div class="col-md-4 text-center">
-                            <h5>จำนวนโซน</h5>
-                            <div class="area-total" id="totalZones">0</div>
-                            <div>โซน</div>
+                <!-- Summary Statistics -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-graph-up"></i> สถิติสรุป
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="stat-card text-center">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-grid-3x3-gap"></i>
+                                    </div>
+                                    <div class="stat-value" id="totalPlots">0</div>
+                                    <div class="stat-label">แปลงทั้งหมด</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card text-center">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-map"></i>
+                                    </div>
+                                    <div class="stat-value" id="totalZones">0</div>
+                                    <div class="stat-label">จำนวนโซน</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card text-center">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-arrows-angle-expand"></i>
+                                    </div>
+                                    <div class="stat-value" id="totalAreaRai">0</div>
+                                    <div class="stat-label">พื้นที่รวม (ไร่)</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card text-center">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-arrow-up-right"></i>
+                                    </div>
+                                    <div class="stat-value" id="avgArea">0</div>
+                                    <div class="stat-label">พื้นที่เฉลี่ย/แปลง</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Zone Summary -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="bi bi-pie-chart"></i> สรุปพื้นที่ตามโซน
-                </div>
-                <div class="card-body">
-                    <table class="table table-striped" id="zoneSummaryTable">
-                        <thead>
-                            <tr>
-                                <th>โซน</th>
-                                <th>จำนวนแปลง</th>
-                                <th>พื้นที่รวม (ไร่)</th>
-                                <th>พื้นที่รวม (ตร.ม.)</th>
-                                <th>ร้อยละ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Zone summary rows will be added here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Plot Details -->
-            <div class="card">
-                <div class="card-header">
-                    <i class="bi bi-table"></i> รายละเอียดแปลงทั้งหมด
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="plotDetailsTable">
-                            <thead>
-                                <tr>
-                                    <th>ลำดับ</th>
-                                    <th>รหัสแปลง</th>
-                                    <th>โซน</th>
-                                    <th>พื้นที่ (ไร่)</th>
-                                    <th>พื้นที่ (ตร.ม.)</th>
-                                    <th>หมายเหตุ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Plot detail rows will be added here -->
-                            </tbody>
-                        </table>
+                
+                <!-- Zone Summary -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart"></i> สรุปตามโซน
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="zoneChart"></canvas>
+                        </div>
+                        <div class="mt-3" id="zoneList">
+                            <!-- Zone list will be populated here -->
+                            <p class="text-center text-muted">ไม่มีข้อมูลโซน</p>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Actions -->
-            <div class="d-flex justify-content-between mt-3">
-                <button type="button" class="btn btn-outline-secondary" id="resetBtn">
-                    <i class="bi bi-arrow-clockwise"></i> รีเซ็ต
-                </button>
-                <div>
-                    <button type="button" class="btn btn-success" id="exportCsvBtn">
-                        <i class="bi bi-download"></i> ดาวน์โหลด CSV
-                    </button>
-                    <button type="button" class="btn btn-primary" id="printBtn">
-                        <i class="bi bi-printer"></i> พิมพ์รายงาน
-                    </button>
+            <!-- Right Column: Data Table and Reports -->
+            <div class="col-lg-8">
+                <!-- Data Table Card -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-table"></i> ข้อมูลแปลงทั้งหมด
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-success btn-sm" id="generateReportBtn">
+                                <i class="bi bi-file-earmark-text"></i> สร้างรายงาน
+                            </button>
+                            <button class="btn btn-info btn-sm" id="exportExcelBtn">
+                                <i class="bi bi-file-earmark-excel"></i> Excel
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="exportPdfBtn">
+                                <i class="bi bi-file-earmark-pdf"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-custom table-hover mb-0" id="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th>ลำดับ</th>
+                                        <th>รหัสแปลง</th>
+                                        <th>โซน</th>
+                                        <th>พื้นที่ (ตร.ม.)</th>
+                                        <th>พื้นที่ (ไร่)</th>
+                                        <th>เจ้าของ</th>
+                                        <th>ประเภทพืช</th>
+                                        <th>การจัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <!-- Data rows will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Report and Analysis Tabs -->
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="reportTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">
+                                    <i class="bi bi-card-checklist"></i> รายงานสรุป
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">
+                                    <i class="bi bi-bar-chart"></i> การวิเคราะห์
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                                    <i class="bi bi-list-ul"></i> รายละเอียด
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="reportTabContent">
+                            <!-- Summary Tab -->
+                            <div class="tab-pane fade show active" id="summary" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="bi bi-info-circle text-primary"></i> สรุปตามโซน</h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" id="zoneSummaryTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>โซน</th>
+                                                        <th>จำนวนแปลง</th>
+                                                        <th>พื้นที่รวม (ไร่)</th>
+                                                        <th>พื้นที่รวม (ตร.ม.)</th>
+                                                        <th>%</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Zone summary rows will be added here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="bi bi-pie-chart text-primary"></i> สัดส่วนพื้นที่ตามโซน</h5>
+                                        <div class="chart-container">
+                                            <canvas id="zonePieChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <h5><i class="bi bi-crop text-primary"></i> สรุปตามประเภทพืช</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" id="cropSummaryTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>ประเภทพืช</th>
+                                                    <th>จำนวนแปลง</th>
+                                                    <th>พื้นที่รวม (ไร่)</th>
+                                                    <th>โซนหลัก</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Crop summary rows will be added here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Analysis Tab -->
+                            <div class="tab-pane fade" id="analysis" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5><i class="bi bi-graph-up text-primary"></i> การกระจายพื้นที่ตามโซน</h5>
+                                        <div class="chart-container">
+                                            <canvas id="zoneBarChart"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5><i class="bi bi-tree text-primary"></i> การกระจายพืชตามโซน</h5>
+                                        <div class="chart-container">
+                                            <canvas id="cropBarChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <h5><i class="bi bi-calendar-check text-primary"></i> สถิติสำคัญ</h5>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border rounded">
+                                                <div class="fs-4 fw-bold" id="maxZone">-</div>
+                                                <div class="text-muted">โซนที่มีพื้นที่มากที่สุด</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border rounded">
+                                                <div class="fs-4 fw-bold" id="maxCrop">-</div>
+                                                <div class="text-muted">พืชที่ปลูกมากที่สุด</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border rounded">
+                                                <div class="fs-4 fw-bold" id="largestPlot">-</div>
+                                                <div class="text-muted">แปลงที่ใหญ่ที่สุด (ไร่)</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 border rounded">
+                                                <div class="fs-4 fw-bold" id="zoneDiversity">-</div>
+                                                <div class="text-muted">ความหลากหลายของโซน</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Details Tab -->
+                            <div class="tab-pane fade" id="details" role="tabpanel">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" class="form-control" id="searchDetail" placeholder="ค้นหารหัสแปลงหรือเจ้าของ...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="filterZoneDetail">
+                                            <option value="">ทั้งหมด (โซน)</option>
+                                            <!-- Zone options will be populated -->
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-sm" id="detailTable">
+                                        <thead>
+                                            <tr>
+                                                <th>รหัสแปลง</th>
+                                                <th>โซน</th>
+                                                <th>พื้นที่ไร่</th>
+                                                <th>พื้นที่ตร.ม.</th>
+                                                <th>เจ้าของ</th>
+                                                <th>พืช</th>
+                                                <th>% ของโซน</th>
+                                                <th>หมายเหตุ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Detail rows will be added here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="row">
+                <div class="col-md-6 text-md-start">
+                    <h6>ระบบสรุปข้อมูลจากตารางตามโซน</h6>
+                    <p class="mb-0">พัฒนาด้วย HTML, JavaScript และ Bootstrap</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">1 ไร่ = 1600 ตารางเมตร</p>
+                    <p class="mb-0">© 2023 กรมพัฒนาที่ดิน</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="text-center text-muted py-4">
-        <p>ระบบคำนวณพื้นที่แปลงดิน &copy; 2023 | 1 ไร่ = 1600 ตารางเมตร</p>
-    </footer>
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-question-circle"></i> คู่มือการใช้งาน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>วิธีการใช้งานระบบ</h6>
+                    <ol>
+                        <li><strong>กรอกข้อมูลด้วยตนเอง:</strong> ใช้ฟอร์มด้านซ้ายเพื่อเพิ่มข้อมูลแปลงทีละแปลง</li>
+                        <li><strong>อัปโหลดไฟล์ CSV:</strong> อัปโหลดไฟล์ CSV ที่มีข้อมูลแปลงทั้งหมด</li>
+                        <li><strong>ข้อมูลที่จำเป็น:</strong> รหัสแปลง, โซน, พื้นที่ (ตร.ม. หรือ ไร่)</li>
+                        <li><strong>ระบบจะคำนวณ:</strong> พื้นที่แปลงเป็นไร่, สรุปตามโซน, สรุปตามพืช</li>
+                        <li><strong>ดูรายงาน:</strong> ดูรายงานสรุปได้ในแท็บต่างๆ ด้านขวา</li>
+                        <li><strong>ส่งออกรายงาน:</strong> สามารถส่งออกรายงานในรูปแบบ Excel หรือ PDF</li>
+                    </ol>
+                    
+                    <h6 class="mt-4">รูปแบบข้อมูล CSV</h6>
+                    <p>ไฟล์ CSV ควรมีหัวคอลัมน์ดังนี้:</p>
+                    <pre class="bg-light p-3 rounded">
+รหัสแปลง,โซน,พื้นที่ตรม,เจ้าของ,ประเภทพืช
+A001,โซน A,1600,สมชาย,ข้าว
+A002,โซน A,2400,สมหญิง,อ้อย
+B001,โซน B,3200,สมหมาย,มันสำปะหลัง</pre>
+                    
+                    <p class="mt-3 text-muted"><i class="bi bi-info-circle"></i> หมายเหตุ: ระบบรองรับพื้นที่ในหน่วยตารางเมตรเท่านั้น (จะแปลงเป็นไร่ให้อัตโนมัติ)</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
