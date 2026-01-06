@@ -3,6 +3,7 @@
 // ตัวแปรเก็บข้อมูล
 let csvData = [];
 let csvHeaders = [];
+let csvColumnSamples = {}; // เก็บตัวอย่างข้อมูลแต่ละคอลัมน์
 let selectedColumns = {
     zone: null,
     area: null,
@@ -10,92 +11,61 @@ let selectedColumns = {
 };
 let summaryData = {};
 let plotsData = [];
-let zoneChart = null;
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     console.log("ระบบเริ่มทำงานแล้ว");
     
     // Browse button
-    const browseBtn = document.getElementById('browseBtn');
-    if (browseBtn) {
-        browseBtn.addEventListener('click', () => {
-            document.getElementById('csvFileInput').click();
-        });
-    }
+    document.getElementById('browseBtn').addEventListener('click', () => {
+        document.getElementById('csvFileInput').click();
+    });
     
     // File input change
-    const fileInput = document.getElementById('csvFileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', handleFileSelect);
-    }
+    document.getElementById('csvFileInput').addEventListener('change', handleFileSelect);
     
     // Remove file button
-    const removeBtn = document.getElementById('removeFileBtn');
-    if (removeBtn) {
-        removeBtn.addEventListener('click', removeFile);
-    }
+    document.getElementById('removeFileBtn').addEventListener('click', removeFile);
+    
+    // Clear selections button
+    document.getElementById('clearSelectionsBtn').addEventListener('click', clearAllSelections);
     
     // Generate report button
-    const generateBtn = document.getElementById('generateReportBtn');
-    if (generateBtn) {
-        generateBtn.addEventListener('click', generateReport);
-    }
+    document.getElementById('generateReportBtn').addEventListener('click', generateReport);
     
     // Export buttons
-    const exportSummaryBtn = document.getElementById('exportSummaryBtn');
-    if (exportSummaryBtn) {
-        exportSummaryBtn.addEventListener('click', exportSummary);
-    }
-    
-    const exportPlotsBtn = document.getElementById('exportPlotsBtn');
-    if (exportPlotsBtn) {
-        exportPlotsBtn.addEventListener('click', exportPlots);
-    }
-    
-    const printBtn = document.getElementById('printReportBtn');
-    if (printBtn) {
-        printBtn.addEventListener('click', printReport);
-    }
+    document.getElementById('exportSummaryBtn').addEventListener('click', exportSummary);
+    document.getElementById('exportPlotsBtn').addEventListener('click', exportPlots);
+    document.getElementById('printReportBtn').addEventListener('click', printReport);
     
     // Search and filter
-    const searchPlot = document.getElementById('searchPlot');
-    if (searchPlot) {
-        searchPlot.addEventListener('input', filterPlots);
-    }
-    
-    const filterZone = document.getElementById('filterZone');
-    if (filterZone) {
-        filterZone.addEventListener('change', filterPlots);
-    }
+    document.getElementById('searchPlot').addEventListener('input', filterPlots);
+    document.getElementById('filterZone').addEventListener('change', filterPlots);
+    document.getElementById('resetFilterBtn').addEventListener('click', resetFilters);
     
     // Drag and drop functionality
     const uploadArea = document.getElementById('uploadArea');
-    if (uploadArea) {
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+    
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
         
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
-        });
-        
-        // Click upload area
-        uploadArea.addEventListener('click', () => {
-            document.getElementById('csvFileInput').click();
-        });
-    }
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+    
+    console.log("Event listeners ทั้งหมดถูกตั้งค่าเรียบร้อย");
 });
 
 // จัดการเมื่อเลือกไฟล์
@@ -135,8 +105,11 @@ function handleFile(file) {
             // แสดงข้อมูลไฟล์
             showFileInfo(file);
             
-            // แสดงตัวเลือกคอลัมน์
-            showColumnOptions();
+            // แสดงส่วนเลือกคอลัมน์
+            showColumnSelectionSection();
+            
+            // แสดงคอลัมน์ทั้งหมด
+            displayAllColumns();
             
             // ซ่อน loading
             showLoading(false);
@@ -191,6 +164,12 @@ function processCSV(content) {
     
     // อ่านข้อมูล
     csvData = [];
+    csvColumnSamples = {};
+    
+    // กำหนดค่าเริ่มต้นสำหรับตัวอย่างคอลัมน์
+    csvHeaders.forEach(header => {
+        csvColumnSamples[header] = [];
+    });
     
     for (let i = 1; i < lines.length; i++) {
         try {
@@ -198,7 +177,13 @@ function processCSV(content) {
             if (values.length === csvHeaders.length) {
                 const row = {};
                 csvHeaders.forEach((header, index) => {
-                    row[header] = values[index] || '';
+                    const value = values[index] || '';
+                    row[header] = value;
+                    
+                    // เก็บตัวอย่างข้อมูล (สูงสุด 5 ค่า)
+                    if (csvColumnSamples[header].length < 5 && value) {
+                        csvColumnSamples[header].push(value);
+                    }
                 });
                 csvData.push(row);
             }
@@ -224,109 +209,242 @@ function showFileInfo(file) {
     }
 }
 
-// แสดงตัวเลือกคอลัมน์
-function showColumnOptions() {
-    const columnSelector = document.getElementById('columnSelector');
-    if (!columnSelector) return;
-    
-    // แสดงส่วนเลือกคอลัมน์
-    columnSelector.style.display = 'block';
-    
-    // สร้างตัวเลือกคอลัมน์โซน
-    createColumnOptions('zoneColumnOptions', 'เลือกคอลัมน์โซน', 'zone', true);
-    
-    // สร้างตัวเลือกคอลัมน์พื้นที่
-    createColumnOptions('areaColumnOptions', 'เลือกคอลัมน์พื้นที่ (ไร่)', 'area', true);
-    
-    // สร้างตัวเลือกคอลัมน์รหัสแปลง
-    createColumnOptions('idColumnOptions', 'เลือกคอลัมน์รหัสแปลง (ไม่บังคับ)', 'id', false);
+// แสดงส่วนเลือกคอลัมน์
+function showColumnSelectionSection() {
+    const columnSelectionSection = document.getElementById('columnSelectionSection');
+    if (columnSelectionSection) {
+        columnSelectionSection.style.display = 'block';
+        columnSelectionSection.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
-// สร้างตัวเลือกคอลัมน์
-function createColumnOptions(containerId, title, columnType, required) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+// แสดงคอลัมน์ทั้งหมด
+function displayAllColumns() {
+    const columnGrid = document.getElementById('columnGrid');
+    const selectedColumnsDisplay = document.getElementById('selectedColumnsDisplay');
     
-    container.innerHTML = '';
+    if (!columnGrid) return;
     
-    // สร้างตัวเลือก "ไม่เลือก"
-    if (!required) {
-        const noneOption = document.createElement('div');
-        noneOption.className = 'column-option';
-        noneOption.innerHTML = `
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="${columnType}Column" id="${columnType}None" value="" ${!selectedColumns[columnType] ? 'checked' : ''}>
-                <label class="form-check-label" for="${columnType}None" style="color: var(--text-light);">
-                    <i class="bi bi-dash-circle me-2"></i>ไม่เลือก
-                </label>
-            </div>
-        `;
-        noneOption.addEventListener('click', () => {
-            const radio = noneOption.querySelector('input[type="radio"]');
-            radio.checked = true;
-            selectedColumns[columnType] = null;
-            updateColumnSelection(columnType, '');
-        });
-        container.appendChild(noneOption);
+    columnGrid.innerHTML = '';
+    
+    // สร้างการ์ดสำหรับแต่ละคอลัมน์
+    csvHeaders.forEach((columnName, index) => {
+        const columnCard = createColumnCard(columnName, index);
+        columnGrid.appendChild(columnCard);
+    });
+    
+    // แสดงส่วนคอลัมน์ที่เลือกแล้ว
+    updateSelectedColumnsDisplay();
+}
+
+// สร้างการ์ดคอลัมน์
+function createColumnCard(columnName, index) {
+    const card = document.createElement('div');
+    card.className = 'column-card';
+    
+    // ตรวจสอบว่าคอลัมน์นี้ถูกเลือกเป็นประเภทไหน
+    let selectedClass = '';
+    let selectedType = '';
+    
+    if (selectedColumns.zone === columnName) {
+        selectedClass = 'zone-selected';
+        selectedType = 'โซน';
+    } else if (selectedColumns.area === columnName) {
+        selectedClass = 'area-selected';
+        selectedType = 'พื้นที่';
+    } else if (selectedColumns.id === columnName) {
+        selectedClass = 'id-selected';
+        selectedType = 'รหัสแปลง';
     }
     
-    // สร้างตัวเลือกสำหรับแต่ละคอลัมน์
-    csvHeaders.forEach((header, index) => {
-        const columnOption = document.createElement('div');
-        columnOption.className = 'column-option';
+    if (selectedClass) {
+        card.classList.add('selected', selectedClass);
+    }
+    
+    // ดึงตัวอย่างข้อมูล
+    const samples = csvColumnSamples[columnName] || [];
+    const sampleText = samples.length > 0 ? samples.join(', ') : 'ไม่มีข้อมูลตัวอย่าง';
+    
+    card.innerHTML = `
+        <div class="column-header">
+            <div class="column-name">${columnName}</div>
+            ${selectedType ? `<span class="column-badge">${selectedType}</span>` : ''}
+        </div>
+        <div class="column-preview" title="${sampleText}">
+            <small>${sampleText}</small>
+        </div>
+        <div class="column-actions">
+            <button class="action-btn zone-btn" data-column="${columnName}" data-type="zone">
+                <i class="bi bi-pin-map me-1"></i> ใช้เป็นโซน
+            </button>
+            <button class="action-btn area-btn" data-column="${columnName}" data-type="area">
+                <i class="bi bi-square me-1"></i> ใช้เป็นพื้นที่
+            </button>
+            <button class="action-btn id-btn" data-column="${columnName}" data-type="id">
+                <i class="bi bi-hash me-1"></i> ใช้เป็นรหัส
+            </button>
+        </div>
+    `;
+    
+    // เพิ่ม event listeners สำหรับปุ่ม
+    const zoneBtn = card.querySelector('.zone-btn');
+    const areaBtn = card.querySelector('.area-btn');
+    const idBtn = card.querySelector('.id-btn');
+    
+    zoneBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectColumn(columnName, 'zone');
+        updateColumnCards();
+    });
+    
+    areaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectColumn(columnName, 'area');
+        updateColumnCards();
+    });
+    
+    idBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectColumn(columnName, 'id');
+        updateColumnCards();
+    });
+    
+    // คลิกที่การ์ดเพื่อดูรายละเอียด
+    card.addEventListener('click', () => {
+        showColumnDetails(columnName);
+    });
+    
+    return card;
+}
+
+// เลือกคอลัมน์
+function selectColumn(columnName, type) {
+    // ถ้าคอลัมน์นี้ถูกเลือกอยู่แล้วเป็นประเภทนี้ ให้ยกเลิกการเลือก
+    if (selectedColumns[type] === columnName) {
+        selectedColumns[type] = null;
+        showMessage(`ยกเลิกเลือกคอลัมน์ "${columnName}" เป็น${getTypeLabel(type)}`, 'info');
+    } else {
+        // ถ้ามีคอลัมน์อื่นถูกเลือกเป็นประเภทนี้อยู่แล้ว ให้ยกเลิกก่อน
+        if (selectedColumns[type]) {
+            showMessage(`เปลี่ยนคอลัมน์${getTypeLabel(type)}จาก "${selectedColumns[type]}" เป็น "${columnName}"`, 'info');
+        } else {
+            showMessage(`เลือกคอลัมน์ "${columnName}" เป็น${getTypeLabel(type)}`, 'success');
+        }
         
-        // ตรวจสอบว่าคอลัมน์นี้เหมาะกับประเภทนี้หรือไม่
-        const isRecommended = isRecommendedForType(header, columnType);
-        const recommendedText = isRecommended ? '<span class="badge bg-success ms-2">แนะนำ</span>' : '';
-        
-        columnOption.innerHTML = `
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="${columnType}Column" id="${columnType}${index}" value="${header}" ${selectedColumns[columnType] === header ? 'checked' : ''}>
-                <label class="form-check-label" for="${columnType}${index}">
-                    ${header} ${recommendedText}
-                </label>
-            </div>
-        `;
-        
-        columnOption.addEventListener('click', () => {
-            const radio = columnOption.querySelector('input[type="radio"]');
-            radio.checked = true;
-            selectedColumns[columnType] = header;
-            updateColumnSelection(columnType, header);
-        });
-        
-        container.appendChild(columnOption);
+        selectedColumns[type] = columnName;
+    }
+    
+    updateSelectedColumnsDisplay();
+}
+
+// ดึงชื่อประเภทเป็นภาษาไทย
+function getTypeLabel(type) {
+    switch(type) {
+        case 'zone': return 'โซน';
+        case 'area': return 'พื้นที่';
+        case 'id': return 'รหัสแปลง';
+        default: return '';
+    }
+}
+
+// อัปเดตการ์ดคอลัมน์ทั้งหมด
+function updateColumnCards() {
+    const columnGrid = document.getElementById('columnGrid');
+    if (!columnGrid) return;
+    
+    // ลบการ์ดทั้งหมด
+    columnGrid.innerHTML = '';
+    
+    // สร้างการ์ดใหม่
+    csvHeaders.forEach((columnName, index) => {
+        const columnCard = createColumnCard(columnName, index);
+        columnGrid.appendChild(columnCard);
     });
 }
 
-// ตรวจสอบว่าคอลัมน์แนะนำสำหรับประเภทนี้หรือไม่
-function isRecommendedForType(columnName, type) {
-    const columnNameLower = columnName.toLowerCase();
+// แสดงรายละเอียดคอลัมน์
+function showColumnDetails(columnName) {
+    const samples = csvColumnSamples[columnName] || [];
+    const dataType = detectDataType(samples);
     
-    switch(type) {
-        case 'zone':
-            return columnNameLower.includes('โซน') || 
-                   columnNameLower.includes('zone') || 
-                   columnNameLower.includes('พื้นที่');
-        case 'area':
-            return columnNameLower.includes('ไร่') || 
-                   columnNameLower.includes('area') || 
-                   columnNameLower.includes('พื้นที่') ||
-                   columnNameLower.includes('ขนาด');
-        case 'id':
-            return columnNameLower.includes('รหัส') || 
-                   columnNameLower.includes('id') || 
-                   columnNameLower.includes('แปลง') ||
-                   columnNameLower.includes('เลขที่');
-        default:
-            return false;
+    let message = `คอลัมน์: <strong>${columnName}</strong><br>`;
+    message += `ประเภทข้อมูล: <strong>${dataType}</strong><br>`;
+    message += `จำนวนข้อมูล: <strong>${csvData.length}</strong> แถว<br>`;
+    message += `ตัวอย่างข้อมูล: <em>${samples.length > 0 ? samples.join(', ') : 'ไม่มีข้อมูล'}</em>`;
+    
+    showMessage(message, 'info', 5000);
+}
+
+// ตรวจสอบประเภทข้อมูล
+function detectDataType(samples) {
+    if (samples.length === 0) return 'ไม่ทราบ';
+    
+    // ตรวจสอบว่าข้อมูลเป็นตัวเลขหรือไม่
+    const isNumeric = samples.every(sample => !isNaN(sample) && sample.trim() !== '');
+    
+    if (isNumeric) {
+        // ตรวจสอบว่าเป็นพื้นที่ไร่หรือไม่ (มักจะมีทศนิยม)
+        const hasDecimal = samples.some(sample => sample.includes('.'));
+        return hasDecimal ? 'ตัวเลข (พื้นที่ไร่)' : 'ตัวเลข';
+    }
+    
+    // ตรวจสอบว่ามีคำว่าโซนหรือ zone หรือไม่
+    const hasZone = samples.some(sample => 
+        sample.toLowerCase().includes('โซน') || 
+        sample.toLowerCase().includes('zone')
+    );
+    
+    if (hasZone) return 'ข้อความ (โซน)';
+    
+    // ตรวจสอบว่ามีรหัสแปลงหรือไม่
+    const hasCode = samples.some(sample => 
+        /^[A-Za-z0-9]+$/.test(sample) || 
+        sample.toLowerCase().includes('แปลง')
+    );
+    
+    if (hasCode) return 'ข้อความ (รหัส)';
+    
+    return 'ข้อความ';
+}
+
+// อัปเดตการแสดงคอลัมน์ที่เลือกแล้ว
+function updateSelectedColumnsDisplay() {
+    const selectedColumnsDisplay = document.getElementById('selectedColumnsDisplay');
+    const selectedZoneColumn = document.getElementById('selectedZoneColumn');
+    const selectedAreaColumn = document.getElementById('selectedAreaColumn');
+    const selectedIdColumn = document.getElementById('selectedIdColumn');
+    
+    if (!selectedColumnsDisplay || !selectedZoneColumn || !selectedAreaColumn || !selectedIdColumn) return;
+    
+    // อัปเดตข้อความ
+    selectedZoneColumn.textContent = selectedColumns.zone || 'ยังไม่ได้เลือก';
+    selectedAreaColumn.textContent = selectedColumns.area || 'ยังไม่ได้เลือก';
+    selectedIdColumn.textContent = selectedColumns.id || 'ยังไม่ได้เลือก (ไม่บังคับ)';
+    
+    // ตรวจสอบว่ามีการเลือกคอลัมน์โซนและพื้นที่แล้วหรือไม่
+    const hasRequiredColumns = selectedColumns.zone && selectedColumns.area;
+    
+    // แสดงหรือซ่อนส่วนคอลัมน์ที่เลือกแล้ว
+    if (hasRequiredColumns) {
+        selectedColumnsDisplay.style.display = 'block';
+        selectedColumnsDisplay.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        selectedColumnsDisplay.style.display = 'none';
     }
 }
 
-// อัปเดตการเลือกคอลัมน์
-function updateColumnSelection(type, value) {
-    selectedColumns[type] = value;
-    console.log(`เลือกคอลัมน์ ${type}: ${value}`);
+// ล้างการเลือกทั้งหมด
+function clearAllSelections() {
+    selectedColumns = {
+        zone: null,
+        area: null,
+        id: null
+    };
+    
+    updateColumnCards();
+    updateSelectedColumnsDisplay();
+    
+    showMessage('ล้างการเลือกคอลัมน์ทั้งหมดเรียบร้อยแล้ว', 'info');
 }
 
 // สร้างรายงานสรุปผล
@@ -338,15 +456,14 @@ function generateReport() {
         return;
     }
     
-    // ตรวจสอบว่ามีการเลือกคอลัมน์โซนหรือไม่
+    // ตรวจสอบว่ามีการเลือกคอลัมน์โซนและพื้นที่แล้วหรือไม่
     if (!selectedColumns.zone) {
         showMessage('กรุณาเลือกคอลัมน์โซนสำหรับสรุปผล', 'warning');
         return;
     }
     
-    // ตรวจสอบว่ามีการเลือกคอลัมน์พื้นที่หรือไม่
     if (!selectedColumns.area) {
-        showMessage('กรุณาเลือกคอลัมน์พื้นที่ (ไร่) สำหรับสรุปผล', 'warning');
+        showMessage('กรุณาเลือกคอลัมน์พื้นที่สำหรับสรุปผล', 'warning');
         return;
     }
     
@@ -365,17 +482,15 @@ function generateReport() {
             // แสดงผลลัพธ์
             displayResults();
             
-            // แสดงตารางแปลง
-            displayPlotsTable();
-            
-            // แสดงการวิเคราะห์
-            displayAnalysis();
+            // แสดงข้อมูลรายงาน
+            displayReportInfo();
             
             // แสดงส่วนผลลัพธ์
-            document.getElementById('resultsSection').style.display = 'block';
-            
-            // เลื่อนไปยังผลลัพธ์
-            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
             
             // ซ่อน loading
             showLoading(false);
@@ -427,10 +542,7 @@ function calculateSummary() {
         zones: {},
         totalPlots: plotsData.length,
         totalArea: 0,
-        uniqueZones: new Set(),
-        maxZonePlots: { name: '', count: 0 },
-        maxZoneArea: { name: '', area: 0 },
-        largestPlot: { id: '', area: 0 }
+        uniqueZones: new Set()
     };
     
     plotsData.forEach(plot => {
@@ -441,33 +553,16 @@ function calculateSummary() {
         if (!summaryData.zones[zone]) {
             summaryData.zones[zone] = {
                 count: 0,
-                totalArea: 0,
-                plots: []
+                totalArea: 0
             };
         }
         
         summaryData.zones[zone].count++;
         summaryData.zones[zone].totalArea += area;
-        summaryData.zones[zone].plots.push(plot);
         
         // อัพเดทผลรวม
         summaryData.totalArea += area;
         summaryData.uniqueZones.add(zone);
-        
-        // ค้นหาโซนที่มีแปลงมากที่สุด
-        if (summaryData.zones[zone].count > summaryData.maxZonePlots.count) {
-            summaryData.maxZonePlots = { name: zone, count: summaryData.zones[zone].count };
-        }
-        
-        // ค้นหาโซนที่มีพื้นที่มากที่สุด
-        if (summaryData.zones[zone].totalArea > summaryData.maxZoneArea.area) {
-            summaryData.maxZoneArea = { name: zone, area: summaryData.zones[zone].totalArea };
-        }
-        
-        // ค้นหาแปลงที่ใหญ่ที่สุด
-        if (area > summaryData.largestPlot.area) {
-            summaryData.largestPlot = { id: plot.id, area: area };
-        }
     });
     
     console.log("คำนวณสรุปผลเสร็จสิ้น:", summaryData);
@@ -486,6 +581,9 @@ function displayResults() {
     
     // แสดงตารางสรุปตามโซน
     displayZoneSummary();
+    
+    // แสดงตารางแปลง
+    displayPlotsTable();
 }
 
 // แสดงสรุปตามโซน
@@ -598,7 +696,7 @@ function updatePlotsTable() {
             <td>${plot.index}</td>
             <td><strong>${plot.id}</strong></td>
             <td>
-                <span class="badge" style="background-color: ${getZoneColor(plot.zone)}">${plot.zone}</span>
+                <span class="badge zone-badge">${plot.zone}</span>
             </td>
             <td class="${areaClass}"><strong>${formatNumber(plot.area, 2)}</strong></td>
             <td><small class="text-muted">${plot.note}</small></td>
@@ -620,131 +718,24 @@ function updatePlotsTable() {
     }
 }
 
+// แสดงข้อมูลรายงาน
+function displayReportInfo() {
+    document.getElementById('reportZoneColumn').textContent = selectedColumns.zone;
+    document.getElementById('reportAreaColumn').textContent = selectedColumns.area;
+    document.getElementById('reportIdColumn').textContent = selectedColumns.id || 'ไม่ได้เลือก';
+    document.getElementById('reportTotalData').textContent = csvData.length;
+}
+
 // กรองแปลง
 function filterPlots() {
     updatePlotsTable();
 }
 
-// แสดงการวิเคราะห์
-function displayAnalysis() {
-    // อัพเดทสถิติสำคัญ
-    document.getElementById('maxPlotsZone').textContent = `${summaryData.maxZonePlots.name} (${summaryData.maxZonePlots.count} แปลง)`;
-    document.getElementById('maxAreaZone').textContent = `${summaryData.maxZoneArea.name} (${formatNumber(summaryData.maxZoneArea.area, 2)} ไร่)`;
-    document.getElementById('largestPlot').textContent = `${summaryData.largestPlot.id} (${formatNumber(summaryData.largestPlot.area, 2)} ไร่)`;
-    
-    const avgArea = summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0;
-    document.getElementById('averagePlotArea').textContent = formatNumber(avgArea, 2);
-    
-    // สร้างกราฟ
-    createZoneChart();
-}
-
-// สร้างกราฟโซน
-function createZoneChart() {
-    const ctx = document.getElementById('zoneChart')?.getContext('2d');
-    if (!ctx) return;
-    
-    // ลบกราฟเก่าถ้ามี
-    if (zoneChart) {
-        zoneChart.destroy();
-    }
-    
-    // เรียงลำดับโซนตามจำนวนแปลง
-    const sortedZones = Object.keys(summaryData.zones).sort((a, b) => {
-        return summaryData.zones[b].count - summaryData.zones[a].count;
-    });
-    
-    const zoneNames = sortedZones;
-    const plotCounts = zoneNames.map(zone => summaryData.zones[zone].count);
-    
-    // สีสำหรับแต่ละโซน
-    const backgroundColors = zoneNames.map(zone => getZoneColor(zone));
-    
-    zoneChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: zoneNames,
-            datasets: [{
-                label: 'จำนวนแปลง',
-                data: plotCounts,
-                backgroundColor: backgroundColors,
-                borderColor: backgroundColors.map(color => darkenColor(color, 20)),
-                borderWidth: 1,
-                borderRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'จำนวนแปลง'
-                    },
-                    ticks: {
-                        stepSize: 1
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'โซน'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `จำนวนแปลง: ${context.parsed.y} แปลง`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-// ดึงสีสำหรับโซน
-function getZoneColor(zone) {
-    // สร้างสีจาก hash ของชื่อโซน
-    let hash = 0;
-    for (let i = 0; i < zone.length; i++) {
-        hash = zone.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    // สร้างสีจาก pastel palette
-    const colors = [
-        '#B0E0E6', // Powder Blue
-        '#87CEEB', // Sky Blue
-        '#98FB98', // Pale Green
-        '#FFDAB9', // Peach Puff
-        '#E6E6FA', // Lavender
-        '#F0E68C', // Khaki
-        '#DDA0DD', // Plum
-        '#AFEEEE'  // Pale Turquoise
-    ];
-    
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
-}
-
-// ทำให้สีเข้มขึ้น
-function darkenColor(color, percent) {
-    let r = parseInt(color.substring(1, 3), 16);
-    let g = parseInt(color.substring(3, 5), 16);
-    let b = parseInt(color.substring(5, 7), 16);
-
-    r = Math.floor(r * (100 - percent) / 100);
-    g = Math.floor(g * (100 - percent) / 100);
-    b = Math.floor(b * (100 - percent) / 100);
-
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+// รีเซ็ตฟิลเตอร์
+function resetFilters() {
+    document.getElementById('searchPlot').value = '';
+    document.getElementById('filterZone').value = '';
+    updatePlotsTable();
 }
 
 // ส่งออกสรุปผล
@@ -778,6 +769,7 @@ function exportSummary() {
     csvContent += `พื้นที่เฉลี่ยต่อแปลง,${(summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0).toFixed(2)}\n`;
     csvContent += `คอลัมน์โซนที่ใช้,${selectedColumns.zone}\n`;
     csvContent += `คอลัมน์พื้นที่ที่ใช้,${selectedColumns.area}\n`;
+    csvContent += `คอลัมน์รหัสแปลงที่ใช้,${selectedColumns.id || '-'}\n`;
     csvContent += `วันที่สรุปผล,${new Date().toLocaleDateString('th-TH')}\n`;
     
     downloadCSV(csvContent, `สรุปผลตามโซน_${new Date().toISOString().slice(0,10)}.csv`);
@@ -801,18 +793,6 @@ function exportPlots() {
     downloadCSV(csvContent, `รายการแปลง_${new Date().toISOString().slice(0,10)}.csv`);
     
     showMessage('ดาวน์โหลดรายการแปลงเรียบร้อยแล้ว', 'success');
-}
-
-// ดาวน์โหลดไฟล์ CSV
-function downloadCSV(content, filename) {
-    const blob = new Blob(["\uFEFF" + content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 }
 
 // พิมพ์รายงาน
@@ -841,7 +821,7 @@ function printReport() {
                 body { 
                     font-family: 'Sarabun', sans-serif; 
                     margin: 20px; 
-                    color: #2F4F4F;
+                    color: #2C3E50;
                 }
                 
                 .report-container {
@@ -850,24 +830,24 @@ function printReport() {
                 }
                 
                 h1 { 
-                    color: #4169E1; 
-                    border-bottom: 2px solid #B0E0E6; 
+                    color: #1976D2; 
+                    border-bottom: 2px solid #64B5F6; 
                     padding-bottom: 10px; 
                     margin-bottom: 20px;
                 }
                 
                 h2 { 
-                    color: #4682B4; 
+                    color: #4A90E2; 
                     margin-top: 25px; 
                     margin-bottom: 15px;
                 }
                 
                 .header-info {
-                    background-color: #F0F8FF;
+                    background-color: #E3F2FD;
                     padding: 15px;
                     border-radius: 10px;
                     margin-bottom: 20px;
-                    border: 1px solid #B0E0E6;
+                    border: 1px solid #90CAF9;
                 }
                 
                 table { 
@@ -877,42 +857,37 @@ function printReport() {
                 }
                 
                 th { 
-                    background-color: #B0E0E6; 
-                    color: #2F4F4F; 
+                    background-color: #64B5F6; 
+                    color: white; 
                     padding: 12px; 
                     text-align: left; 
-                    border-bottom: 2px solid #6495ED;
+                    border-bottom: 2px solid #1976D2;
                 }
                 
                 td { 
                     padding: 10px 12px; 
-                    border-bottom: 1px solid #E6F3FF; 
+                    border-bottom: 1px solid #E3F2FD; 
                 }
                 
                 tr:nth-child(even) { 
-                    background-color: #F8FDFF; 
+                    background-color: #F8FBFF; 
                 }
                 
                 .summary-box { 
-                    background-color: #F0F8FF; 
+                    background-color: #E3F2FD; 
                     padding: 20px; 
                     border-radius: 10px; 
                     margin: 20px 0; 
-                    border: 1px solid #B0E0E6;
+                    border: 1px solid #90CAF9;
                 }
                 
                 .footer { 
                     margin-top: 30px; 
                     text-align: center; 
-                    color: #708090; 
+                    color: #7B8A8B; 
                     font-size: 0.9em; 
                     padding-top: 20px;
-                    border-top: 1px solid #E6F3FF;
-                }
-                
-                .stat-number {
-                    font-weight: bold;
-                    color: #4169E1;
+                    border-top: 1px solid #E3F2FD;
                 }
                 
                 @media print {
@@ -929,24 +904,25 @@ function printReport() {
         </head>
         <body>
             <div class="report-container">
-                <h1>📊 รายงานสรุปผลแปลงตามโซน</h1>
+                <h1>รายงานสรุปผลแปลงตามโซน</h1>
                 
                 <div class="header-info">
                     <p><strong>วันที่สร้างรายงาน:</strong> ${printDate} ${printTime}</p>
                     <p><strong>ไฟล์ต้นฉบับ:</strong> ${fileName}</p>
                     <p><strong>คอลัมน์โซนที่ใช้:</strong> "${selectedColumns.zone}"</p>
                     <p><strong>คอลัมน์พื้นที่ที่ใช้:</strong> "${selectedColumns.area}"</p>
+                    <p><strong>คอลัมน์รหัสแปลงที่ใช้:</strong> "${selectedColumns.id || 'ไม่ได้เลือก'}"</p>
                 </div>
                 
                 <div class="summary-box">
-                    <h2>📈 สรุปภาพรวม</h2>
-                    <p><strong>จำนวนแปลงทั้งหมด:</strong> <span class="stat-number">${summaryData.totalPlots}</span> แปลง</p>
-                    <p><strong>จำนวนโซน:</strong> <span class="stat-number">${summaryData.uniqueZones.size}</span> โซน</p>
-                    <p><strong>พื้นที่รวมทั้งหมด:</strong> <span class="stat-number">${formatNumber(summaryData.totalArea, 2)}</span> ไร่</p>
-                    <p><strong>พื้นที่เฉลี่ยต่อแปลง:</strong> <span class="stat-number">${formatNumber(summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0, 2)}</span> ไร่</p>
+                    <h2>สรุปภาพรวม</h2>
+                    <p><strong>จำนวนแปลงทั้งหมด:</strong> ${summaryData.totalPlots} แปลง</p>
+                    <p><strong>จำนวนโซน:</strong> ${summaryData.uniqueZones.size} โซน</p>
+                    <p><strong>พื้นที่รวมทั้งหมด:</strong> ${formatNumber(summaryData.totalArea, 2)} ไร่</p>
+                    <p><strong>พื้นที่เฉลี่ยต่อแปลง:</strong> ${formatNumber(summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0, 2)} ไร่</p>
                 </div>
                 
-                <h2>🗺️ สรุปตามโซน</h2>
+                <h2>สรุปตามโซน</h2>
                 <table>
                     <tr>
                         <th>โซน</th>
@@ -984,16 +960,15 @@ function printReport() {
                 
                 <div class="footer">
                     <p>ระบบเลือกคอลัมน์สรุปผลจาก CSV</p>
-                    <p>รายงานนี้สร้างขึ้นอัตโนมัติจากไฟล์ CSV</p>
-                    <p>© 2023 กรมพัฒนาที่ดิน</p>
+                    <p>รายงานนี้สร้างขึ้นอัตโนมัติ</p>
                 </div>
                 
                 <div class="no-print" style="margin-top: 30px; text-align: center;">
-                    <button onclick="window.print()" style="padding: 12px 24px; background-color: #4169E1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-right: 10px;">
-                        🖨️ พิมพ์รายงาน
+                    <button onclick="window.print()" style="padding: 12px 24px; background-color: #1976D2; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                        พิมพ์รายงาน
                     </button>
-                    <button onclick="window.close()" style="padding: 12px 24px; background-color: #708090; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
-                        ✖️ ปิดหน้าต่าง
+                    <button onclick="window.close()" style="padding: 12px 24px; background-color: #7B8A8B; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-left: 10px;">
+                        ปิดหน้าต่าง
                     </button>
                 </div>
             </div>
@@ -1005,10 +980,23 @@ function printReport() {
     printWindow.document.close();
 }
 
+// ดาวน์โหลดไฟล์ CSV
+function downloadCSV(content, filename) {
+    const blob = new Blob(["\uFEFF" + content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 // ลบไฟล์
 function removeFile() {
     csvData = [];
     csvHeaders = [];
+    csvColumnSamples = {};
     selectedColumns = {
         zone: null,
         area: null,
@@ -1017,19 +1005,19 @@ function removeFile() {
     
     document.getElementById('csvFileInput').value = '';
     
-    const fileInfo = document.getElementById('fileInfo');
-    const columnSelector = document.getElementById('columnSelector');
-    const resultsSection = document.getElementById('resultsSection');
+    // ซ่อนส่วนต่างๆ
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('columnSelectionSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
     
-    if (fileInfo) fileInfo.style.display = 'none';
-    if (columnSelector) columnSelector.style.display = 'none';
-    if (resultsSection) resultsSection.style.display = 'none';
+    // เคลียร์กริดคอลัมน์
+    document.getElementById('columnGrid').innerHTML = '';
     
     showMessage('ลบไฟล์เรียบร้อยแล้ว', 'info');
 }
 
 // แสดงข้อความ
-function showMessage(message, type = 'info') {
+function showMessage(message, type = 'info', duration = 3000) {
     const alertContainer = document.getElementById('alertContainer');
     if (!alertContainer) return;
     
@@ -1057,29 +1045,30 @@ function showMessage(message, type = 'info') {
     
     const alertId = 'alert-' + Date.now();
     const alertHtml = `
-        <div id="${alertId}" class="alert alert-custom alert-${colorClass} alert-dismissible fade show" role="alert">
+        <div id="${alertId}" class="alert alert-${colorClass} alert-dismissible fade show" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <i class="bi bi-${icon} me-2"></i>
-            ${message}
+            <span>${message}</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     `;
     
     alertContainer.insertAdjacentHTML('afterbegin', alertHtml);
     
-    // อัตโนมัติปิดหลังจาก 5 วินาที
+    // อัตโนมัติปิดหลังจากระยะเวลาที่กำหนด
     setTimeout(() => {
         const alertElement = document.getElementById(alertId);
         if (alertElement) {
             const bsAlert = new bootstrap.Alert(alertElement);
             bsAlert.close();
         }
-    }, 5000);
+    }, duration);
 }
 
 // แสดง/ซ่อน loading
 function showLoading(show) {
     const loadingSpinner = document.getElementById('loadingSpinner');
     const generateBtn = document.getElementById('generateReportBtn');
+    const browseBtn = document.getElementById('browseBtn');
     
     if (loadingSpinner) {
         loadingSpinner.style.display = show ? 'block' : 'none';
@@ -1090,6 +1079,10 @@ function showLoading(show) {
         generateBtn.innerHTML = show ? 
             '<i class="bi bi-hourglass-split me-2"></i> กำลังประมวลผล...' : 
             '<i class="bi bi-graph-up me-2"></i> สร้างรายงานสรุปผล';
+    }
+    
+    if (browseBtn) {
+        browseBtn.disabled = show;
     }
 }
 
