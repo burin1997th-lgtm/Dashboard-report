@@ -1,961 +1,424 @@
-// CSV Filter App - แก้ไขปัญหาส่วนกรองข้อมูลไม่แสดง
+// ตัวแปรเก็บข้อมูล
+let csvData = [];
+let columns = [];
+let results = {
+    zones: {},
+    totalAreaRai: 0,
+    totalAreaSqm: 0,
+    totalPlots: 0,
+    plotDetails: []
+};
 
-// ตัวแปร global
-let currentCSVData = null;
-let currentHeaders = [];
-let filteredData = [];
-let filteredHeaders = [];
-let totalRows = 0;
-let totalColumns = 0;
-let selectedColumns = new Set();
-let allColumns = [];
+// ค่าคงที่แปลงหน่วย
+const RAI_TO_SQM = 1600; // 1 ไร่ = 1600 ตารางเมตร
 
-// เริ่มต้นเมื่อโหลดหน้าเว็บ
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('CSV Filter App เริ่มต้นแล้ว');
-    
-    // อ้างอิงถึง DOM elements
-    const csvFileInput = document.getElementById('csvFileInput');
-    const readFileBtn = document.getElementById('readFileBtn');
-    const showPreviewBtn = document.getElementById('showPreviewBtn');
-    const filterBtn = document.getElementById('filterBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const newFileBtn = document.getElementById('newFileBtn');
-    const backToColumnsBtn = document.getElementById('backToColumnsBtn');
-    const selectAllBtn = document.getElementById('selectAllBtn');
-    const deselectAllBtn = document.getElementById('deselectAllBtn');
-    const columnSearch = document.getElementById('columnSearch');
-    
-    // เมื่อเลือกไฟล์
-    csvFileInput.addEventListener('change', handleFileSelect);
-    
-    // เมื่อคลิกปุ่มอ่านไฟล์
-    readFileBtn.addEventListener('click', readSelectedFile);
-    
-    // เมื่อคลิกปุ่มดูข้อมูลตัวอย่าง
-    showPreviewBtn.addEventListener('click', showPreviewWithSelectedColumns);
-    
-    // เมื่อคลิกปุ่มกรองข้อมูล
-    filterBtn.addEventListener('click', processAndDisplayCSV);
-    
-    // เมื่อคลิกปุ่มคัดลอกข้อมูล
-    copyBtn.addEventListener('click', copyFilteredData);
-    
-    // เมื่อคลิกปุ่มดาวน์โหลด
-    downloadBtn.addEventListener('click', downloadFilteredCSV);
-    
-    // เมื่อคลิกปุ่มไฟล์ใหม่
-    newFileBtn.addEventListener('click', resetToNewFile);
-    
-    // เมื่อคลิกปุ่มกลับไปเลือกคอลัมน์
-    backToColumnsBtn.addEventListener('click', goBackToColumnSelection);
-    
-    // เมื่อคลิกปุ่มเลือกทั้งหมด
-    selectAllBtn.addEventListener('click', selectAllColumns);
-    
-    // เมื่อคลิกปุ่มไม่เลือกทั้งหมด
-    deselectAllBtn.addEventListener('click', deselectAllColumns);
-    
-    // เมื่อค้นหาคอลัมน์
-    columnSearch.addEventListener('input', filterColumnList);
-    
-    // ตั้งค่า Drag & Drop
-    setupDragAndDrop();
-    
-    console.log('แอปพร้อมใช้งานแล้ว');
-});
-
-// ============================================
-// ฟังก์ชันจัดการเมื่อเลือกไฟล์
-// ============================================
-
-function handleFileSelect(event) {
-    const file = event.target.files[0];
+// อัปโหลดไฟล์ CSV
+document.getElementById('csvFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
     if (!file) return;
     
-    console.log('ไฟล์ที่เลือก:', file.name, 'ขนาด:', formatFileSize(file.size));
-    
-    // รีเซ็ตสถานะก่อน
-    resetUI();
-    
-    // ตรวจสอบว่าเป็นไฟล์ CSV
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-        showMessage('กรุณาเลือกไฟล์ CSV เท่านั้น (.csv)', 'error');
-        return;
-    }
-    
-    // ตรวจสอบขนาดไฟล์ (จำกัดที่ 100MB)
-    const MAX_SIZE = 100 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-        showMessage(`ไฟล์ขนาดใหญ่เกินไป (${formatFileSize(file.size)}) กรุณาเลือกไฟล์ที่เล็กกว่า 100MB`, 'error');
-        return;
-    }
-    
-    // แสดงข้อมูลไฟล์
-    showFileInfo(file);
-    
-    // แสดงการ์ดตั้งค่า
-    document.getElementById('settingsCard').style.display = 'block';
-    
-    // แสดงข้อความสำเร็จ
-    showMessage(`เลือกไฟล์สำเร็จ: ${file.name} (${formatFileSize(file.size)})`, 'success');
-}
-
-// อ่านไฟล์ที่เลือก
-function readSelectedFile() {
-    const fileInput = document.getElementById('csvFileInput');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        showMessage('กรุณาเลือกไฟล์ก่อน', 'error');
-        return;
-    }
-    
-    // อ่านไฟล์
-    readFile(file);
-}
-
-// อ่านไฟล์ CSV
-function readFile(file) {
-    const encoding = document.getElementById('inputEncoding').value;
-    
-    // แสดงสถานะ
-    document.getElementById('fileStatus').textContent = 'กำลังอ่านไฟล์...';
-    document.getElementById('fileStatus').style.background = 'linear-gradient(135deg, #FF9800, #FFB74D)';
-    
     const reader = new FileReader();
-    
-    reader.onload = function(e) {
+    reader.onload = function(event) {
         try {
-            let content = e.target.result;
-            
-            console.log('กำลังอ่านไฟล์ด้วย encoding:', encoding);
-            
-            // พยายาม decode ใหม่ถ้า encoding ไม่ตรง
-            if (encoding !== 'utf-8' && encoding !== 'utf-8-sig') {
-                try {
-                    // สำหรับ encoding อื่นๆ
-                    const decoder = new TextDecoder(encoding);
-                    content = decoder.decode(e.target.result);
-                } catch (decodeError) {
-                    console.warn('Cannot decode with', encoding, 'trying UTF-8');
-                    showMessage(`ไม่สามารถอ่านไฟล์ด้วย ${encoding} ลองใช้ UTF-8 แทน`, 'warning');
-                    
-                    // ลองใช้ UTF-8
-                    const decoder = new TextDecoder('utf-8');
-                    content = decoder.decode(e.target.result);
-                }
-            }
-            
-            currentCSVData = content;
-            
-            // แยกและแสดงคอลัมน์
-            parseAndShowColumns();
-            
-            // อัปเดตสถานะไฟล์
-            document.getElementById('fileStatus').textContent = 'อ่านไฟล์สำเร็จ';
-            document.getElementById('fileStatus').style.background = 'linear-gradient(135deg, #4CAF50, #81C784)';
-            
-            // แสดงข้อความสำเร็จ
-            showMessage(`อ่านไฟล์สำเร็จ: พบ ${totalRows} แถว, ${totalColumns} คอลัมน์`, 'success');
-            
+            const content = event.target.result;
+            parseCSV(content);
         } catch (error) {
-            console.error('Error reading file:', error);
-            showMessage('ไม่สามารถอ่านไฟล์ได้: ' + error.message, 'error');
-            document.getElementById('fileStatus').textContent = 'มีข้อผิดพลาด';
-            document.getElementById('fileStatus').style.background = 'linear-gradient(135deg, #F44336, #E57373)';
+            alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV: ' + error.message);
         }
     };
-    
-    reader.onerror = function() {
-        showMessage('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
-        document.getElementById('fileStatus').textContent = 'มีข้อผิดพลาด';
-        document.getElementById('fileStatus').style.background = 'linear-gradient(135deg, #F44336, #E57373)';
-    };
-    
-    // อ่านไฟล์ตาม encoding
-    console.log('กำลังอ่านไฟล์...');
-    if (encoding === 'utf-8' || encoding === 'utf-8-sig') {
-        reader.readAsText(file, 'UTF-8');
-    } else {
-        reader.readAsArrayBuffer(file);
-    }
-}
+    reader.readAsText(file, 'UTF-8');
+});
 
-// ============================================
-// ฟังก์ชันแยกและแสดงคอลัมน์ (แก้ไขให้ทำงานได้)
-// ============================================
-
-function parseAndShowColumns() {
-    try {
-        if (!currentCSVData) {
-            showMessage('ไม่มีข้อมูล CSV', 'error');
-            return;
-        }
-        
-        console.log('กำลังแยกคอลัมน์...');
-        console.log('ข้อมูลตัวอย่าง 200 ตัวแรก:', currentCSVData.substring(0, 200));
-        
-        const delimiter = getDelimiter();
-        console.log('ใช้ delimiter:', delimiter);
-        
-        const lines = currentCSVData.split(/\r\n|\n|\r/);
-        console.log('จำนวนบรรทัดทั้งหมด:', lines.length);
-        
-        if (lines.length < 2) {
-            showMessage('ไฟล์ CSV ไม่มีข้อมูลหรือมีข้อมูลไม่ถูกต้อง', 'error');
-            return;
-        }
-        
-        // หา header
-        let headerLineIndex = 0;
-        let headers = [];
-        let foundHeaders = false;
-        
-        // ตรวจสอบ 5 บรรทัดแรก
-        for (let i = 0; i < Math.min(10, lines.length); i++) {
-            if (!lines[i] || lines[i].trim() === '') {
-                console.log(`บรรทัด ${i}: ว่างเปล่า`);
-                continue;
-            }
-            
-            const testHeaders = lines[i].split(delimiter);
-            console.log(`บรรทัด ${i}:`, lines[i].substring(0, 100));
-            console.log(`พบ ${testHeaders.length} คอลัมน์ในบรรทัด ${i}`);
-            
-            if (testHeaders.length > 1) {
-                headers = testHeaders.map(h => h.trim());
-                headerLineIndex = i;
-                foundHeaders = true;
-                console.log('พบ headers:', headers);
-                break;
-            }
-        }
-        
-        if (!foundHeaders || headers.length === 0) {
-            showMessage('ไม่พบหัวคอลัมน์ในไฟล์ CSV กรุณาตรวจสอบ delimiter', 'error');
-            console.error('ไม่พบ headers');
-            return;
-        }
-        
-        currentHeaders = headers;
-        allColumns = headers;
-        totalColumns = headers.length;
-        
-        // นับจำนวนแถวข้อมูลจริง (ข้ามบรรทัดว่าง)
-        let dataRowCount = 0;
-        for (let i = headerLineIndex + 1; i < lines.length; i++) {
-            if (lines[i] && lines[i].trim() !== '') {
-                dataRowCount++;
-            }
-        }
-        totalRows = dataRowCount;
-        
-        console.log('พบข้อมูล:', totalRows, 'แถว,', totalColumns, 'คอลัมน์');
-        
-        // เลือกคอลัมน์ทั้งหมดโดย default
-        selectedColumns = new Set(headers);
-        
-        // แสดงการ์ดเลือกคอลัมน์
-        document.getElementById('columnSelectionCard').style.display = 'block';
-        
-        // สร้างรายการคอลัมน์
-        createColumnList(headers);
-        
-        // อัปเดตจำนวนคอลัมน์ที่เลือก
-        updateSelectedCount();
-        
-        // แสดงข้อความสำเร็จ
-        showMessage(`✓ อ่านไฟล์สำเร็จ! พบ ${totalRows} แถว, ${totalColumns} คอลัมน์`, 'success');
-        
-    } catch (error) {
-        console.error('Error parsing columns:', error);
-        console.error('Error stack:', error.stack);
-        showMessage('ไม่สามารถแสดงคอลัมน์: ' + error.message, 'error');
-    }
-}
-
-// สร้างรายการคอลัมน์
-function createColumnList(headers) {
-    const columnList = document.getElementById('columnList');
-    columnList.innerHTML = '';
-    
-    console.log('สร้างรายการคอลัมน์จำนวน:', headers.length);
-    
-    headers.forEach((header, index) => {
-        const columnItem = document.createElement('div');
-        columnItem.className = 'column-item';
-        columnItem.dataset.columnName = header;
-        
-        columnItem.innerHTML = `
-            <input type="checkbox" class="column-checkbox" id="col_${index}" 
-                   data-column="${escapeHtml(header)}" ${selectedColumns.has(header) ? 'checked' : ''}>
-            <span class="column-index">${index + 1}</span>
-            <span class="column-name">${escapeHtml(header)}</span>
-        `;
-        
-        // เพิ่ม event listener สำหรับ checkbox
-        const checkbox = columnItem.querySelector('.column-checkbox');
-        checkbox.addEventListener('change', function() {
-            const columnName = this.dataset.column;
-            if (this.checked) {
-                selectedColumns.add(columnName);
-            } else {
-                selectedColumns.delete(columnName);
-            }
-            
-            // อัปเดต UI
-            updateSelectedCount();
-            if (this.checked) {
-                columnItem.classList.add('selected');
-            } else {
-                columnItem.classList.remove('selected');
-            }
-        });
-        
-        // เพิ่ม selected class ถ้าเลือก
-        if (selectedColumns.has(header)) {
-            columnItem.classList.add('selected');
-        }
-        
-        columnList.appendChild(columnItem);
-    });
-}
-
-// กรองรายการคอลัมน์
-function filterColumnList() {
-    const searchTerm = document.getElementById('columnSearch').value.toLowerCase();
-    const columnItems = document.querySelectorAll('.column-item');
-    
-    columnItems.forEach(item => {
-        const columnName = item.dataset.columnName.toLowerCase();
-        if (columnName.includes(searchTerm) || searchTerm === '') {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-}
-
-// อัปเดตจำนวนคอลัมน์ที่เลือก
-function updateSelectedCount() {
-    const selectedCount = document.getElementById('selectedCount');
-    selectedCount.textContent = selectedColumns.size;
-}
-
-// เลือกคอลัมน์ทั้งหมด
-function selectAllColumns() {
-    selectedColumns = new Set(allColumns);
-    
-    // อัปเดต checkbox ทั้งหมด
-    document.querySelectorAll('.column-checkbox').forEach(checkbox => {
-        checkbox.checked = true;
-        const columnItem = checkbox.closest('.column-item');
-        if (columnItem) columnItem.classList.add('selected');
-    });
-    
-    updateSelectedCount();
-    showMessage('เลือกคอลัมน์ทั้งหมดสำเร็จ', 'success');
-}
-
-// ไม่เลือกคอลัมน์ทั้งหมด
-function deselectAllColumns() {
-    selectedColumns.clear();
-    
-    // อัปเดต checkbox ทั้งหมด
-    document.querySelectorAll('.column-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-        const columnItem = checkbox.closest('.column-item');
-        if (columnItem) columnItem.classList.remove('selected');
-    });
-    
-    updateSelectedCount();
-    showMessage('ยกเลิกการเลือกคอลัมน์ทั้งหมด', 'warning');
-}
-
-// ============================================
-// ฟังก์ชันแสดงข้อมูลตัวอย่าง
-// ============================================
-
-function showPreviewWithSelectedColumns() {
-    if (selectedColumns.size === 0) {
-        showMessage('กรุณาเลือกอย่างน้อย 1 คอลัมน์', 'error');
+// แปลงข้อมูล CSV
+function parseCSV(content) {
+    // แยกบรรทัด
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+    if (lines.length === 0) {
+        alert('ไฟล์ CSV ว่างเปล่าหรือรูปแบบไม่ถูกต้อง');
         return;
     }
     
-    if (!currentCSVData) {
-        showMessage('กรุณาเลือกไฟล์ CSV ก่อน', 'error');
-        return;
+    // แยกคอลัมน์ (รองรับทั้ง CSV ที่ใช้ , และ ;)
+    let delimiter = ',';
+    if (lines[0].includes(';') && !lines[0].includes(',')) {
+        delimiter = ';';
     }
     
-    try {
-        const delimiter = getDelimiter();
-        const lines = currentCSVData.split(/\r\n|\n|\r/);
-        
-        console.log('แสดงตัวอย่างข้อมูล...');
-        
-        // หา header
-        let headerLineIndex = 0;
-        let headers = [];
-        let foundHeaders = false;
-        
-        for (let i = 0; i < Math.min(10, lines.length); i++) {
-            if (!lines[i] || lines[i].trim() === '') continue;
-            
-            const testHeaders = lines[i].split(delimiter);
-            if (testHeaders.length > 1) {
-                headers = testHeaders.map(h => h.trim());
-                headerLineIndex = i;
-                foundHeaders = true;
-                break;
-            }
-        }
-        
-        if (!foundHeaders) {
-            showMessage('ไม่พบหัวคอลัมน์ในไฟล์', 'error');
-            return;
-        }
-        
-        // แสดงการ์ดตัวอย่าง
-        document.getElementById('previewCard').style.display = 'block';
-        
-        // อัปเดตสรุปข้อมูล
-        document.getElementById('totalRowsPreview').textContent = formatNumber(totalRows);
-        document.getElementById('totalColsPreview').textContent = totalColumns;
-        document.getElementById('selectedColsPreview').textContent = selectedColumns.size;
-        document.getElementById('fileEncodingPreview').textContent = 
-            document.getElementById('inputEncoding').options[document.getElementById('inputEncoding').selectedIndex].text;
-        
-        // สร้าง array ของคอลัมน์ที่เลือก
-        const selectedColumnsArray = Array.from(selectedColumns);
-        
-        // หาดัชนีของคอลัมน์ที่เลือก
-        const columnIndices = [];
-        selectedColumnsArray.forEach(col => {
-            const index = headers.indexOf(col);
-            if (index !== -1) {
-                columnIndices.push(index);
-            }
-        });
-        
-        // สร้างตารางตัวอย่าง (แสดงแค่ 10 แถวแรก)
-        let tableHTML = '<table class="preview-table">';
-        
-        // Header
-        tableHTML += '<thead><tr>';
-        selectedColumnsArray.forEach(header => {
-            tableHTML += `<th>${escapeHtml(header)}</th>`;
-        });
-        tableHTML += '</tr></thead>';
-        
-        // Data (แสดงแค่ 10 แถวแรก)
-        tableHTML += '<tbody>';
-        const previewRows = Math.min(10, lines.length - headerLineIndex - 1);
-        let displayedRows = 0;
-        
-        for (let i = 1; i <= previewRows + 5; i++) {
-            const lineIndex = headerLineIndex + i;
-            if (!lines[lineIndex] || !lines[lineIndex].trim()) continue;
-            
-            const cells = lines[lineIndex].split(delimiter);
-            
-            tableHTML += '<tr>';
-            columnIndices.forEach(index => {
-                let cellValue = '';
-                if (index < cells.length) {
-                    cellValue = cells[index].trim();
-                }
-                tableHTML += `<td>${escapeHtml(cellValue)}</td>`;
+    // ดึงคอลัมน์จากบรรทัดแรก
+    columns = lines[0].split(delimiter).map(col => col.trim());
+    
+    // ดึงข้อมูล
+    csvData = [];
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(delimiter).map(val => val.trim());
+        if (values.length === columns.length) {
+            const row = {};
+            columns.forEach((col, index) => {
+                row[col] = values[index];
             });
-            tableHTML += '</tr>';
-            
-            displayedRows++;
-            if (displayedRows >= previewRows) break;
+            csvData.push(row);
+        }
+    }
+    
+    // อัปเดต dropdowns
+    updateColumnDropdowns();
+    
+    // แสดงตัวอย่างข้อมูล
+    showPreview();
+    
+    console.log('อัปโหลดไฟล์สำเร็จ:', csvData.length, 'แถว');
+}
+
+// อัปเดต dropdown สำหรับเลือกคอลัมน์
+function updateColumnDropdowns() {
+    const zoneColumnSelect = document.getElementById('zoneColumn');
+    const areaColumnSelect = document.getElementById('areaColumn');
+    
+    // ล้าง options เก่า
+    zoneColumnSelect.innerHTML = '<option value="">เลือกคอลัมน์โซน</option>';
+    areaColumnSelect.innerHTML = '<option value="">เลือกคอลัมน์พื้นที่</option>';
+    
+    // เพิ่ม options ใหม่
+    columns.forEach(column => {
+        const zoneOption = document.createElement('option');
+        zoneOption.value = column;
+        zoneOption.textContent = column;
+        zoneColumnSelect.appendChild(zoneOption);
+        
+        const areaOption = document.createElement('option');
+        areaOption.value = column;
+        areaOption.textContent = column;
+        areaColumnSelect.appendChild(areaOption);
+    });
+    
+    // พยายามเลือกคอลัมน์ที่เกี่ยวข้องกับโซนและพื้นที่อัตโนมัติ
+    autoSelectColumns();
+}
+
+// เลือกคอลัมน์อัตโนมัติจากชื่อ
+function autoSelectColumns() {
+    const zoneColumnSelect = document.getElementById('zoneColumn');
+    const areaColumnSelect = document.getElementById('areaColumn');
+    
+    // ค้นหาคอลัมน์ที่มีคำว่า "โซน", "zone", "พื้นที่", "area" ฯลฯ
+    const zoneKeywords = ['โซน', 'zone', 'zones', 'zon', 'พื้นที่'];
+    const areaKeywords = ['พื้นที่', 'area', 'ขนาด', 'ตร.ม.', 'ไร่', 'sqm', 'rai'];
+    
+    for (let i = 0; i < columns.length; i++) {
+        const col = columns[i].toLowerCase();
+        
+        // ค้นหาโซน
+        if (zoneKeywords.some(keyword => col.includes(keyword.toLowerCase()))) {
+            if (!zoneColumnSelect.value) {
+                zoneColumnSelect.value = columns[i];
+            }
         }
         
-        tableHTML += '</tbody></table>';
-        
-        // แสดงตาราง
-        const previewTable = document.getElementById('previewTable');
-        const previewNoData = document.getElementById('previewNoData');
-        
-        previewTable.innerHTML = tableHTML;
-        previewNoData.style.display = 'none';
-        
-        // แสดงข้อความสำเร็จ
-        showMessage(
-            `✓ เลือกคอลัมน์แล้ว ${selectedColumns.size} คอลัมน์<br>
-             ✓ พร้อมกรองข้อมูล ${formatNumber(totalRows)} แถว`,
-            'success'
-        );
-        
-    } catch (error) {
-        console.error('Error showing preview:', error);
-        showMessage('ไม่สามารถแสดงข้อมูลตัวอย่าง: ' + error.message, 'error');
-    }
-}
-
-// ============================================
-// ฟังก์ชันกรองและแสดงข้อมูล CSV
-// ============================================
-
-function processAndDisplayCSV() {
-    if (selectedColumns.size === 0) {
-        showMessage('กรุณาเลือกอย่างน้อย 1 คอลัมน์', 'error');
-        return;
-    }
-    
-    if (!currentCSVData) {
-        showMessage('กรุณาเลือกไฟล์ CSV ก่อน', 'error');
-        return;
-    }
-    
-    // แสดงสถานะกำลังประมวลผล
-    setProcessingState(true, 'filterBtn');
-    
-    // ใช้ setTimeout เพื่อไม่ให้ block UI
-    setTimeout(() => {
-        try {
-            const delimiter = getDelimiter();
-            const lines = currentCSVData.split(/\r\n|\n|\r/);
-            
-            // หา header
-            let headerLineIndex = 0;
-            let headers = [];
-            let foundHeaders = false;
-            
-            for (let i = 0; i < lines.length; i++) {
-                if (!lines[i] || lines[i].trim() === '') continue;
-                
-                const testHeaders = lines[i].split(delimiter);
-                if (testHeaders.length > 1) {
-                    headers = testHeaders.map(h => h.trim());
-                    headerLineIndex = i;
-                    foundHeaders = true;
-                    break;
-                }
+        // ค้นหาพื้นที่
+        if (areaKeywords.some(keyword => col.includes(keyword.toLowerCase()))) {
+            if (!areaColumnSelect.value) {
+                areaColumnSelect.value = columns[i];
             }
-            
-            if (!foundHeaders) {
-                showMessage('ไม่พบหัวคอลัมน์ในไฟล์', 'error');
-                setProcessingState(false, 'filterBtn');
-                return;
-            }
-            
-            // สร้าง array ของคอลัมน์ที่เลือก
-            filteredHeaders = Array.from(selectedColumns);
-            
-            // หาดัชนีของคอลัมน์ที่เลือก
-            const columnIndices = [];
-            filteredHeaders.forEach(col => {
-                const index = headers.indexOf(col);
-                if (index !== -1) {
-                    columnIndices.push(index);
-                }
-            });
-            
-            // กรองข้อมูลทั้งหมด
-            filteredData = [];
-            let skippedRows = 0;
-            
-            for (let i = headerLineIndex + 1; i < lines.length; i++) {
-                if (!lines[i] || !lines[i].trim()) continue;
-                
-                const cells = lines[i].split(delimiter);
-                
-                // ข้ามแถวที่ไม่มีความยาวพอ
-                if (cells.length < Math.max(...columnIndices) + 1) {
-                    skippedRows++;
-                    continue;
-                }
-                
-                const filteredCells = [];
-                
-                columnIndices.forEach(index => {
-                    let cellValue = '';
-                    if (index < cells.length) {
-                        cellValue = cells[index].trim();
-                    }
-                    filteredCells.push(cellValue);
-                });
-                
-                filteredData.push(filteredCells);
-            }
-            
-            // แสดงผลลัพธ์
-            displayFilteredResults(filteredHeaders, filteredData, headers.length, skippedRows);
-            
-            // แสดงข้อความสำเร็จ
-            showMessage(
-                `✓ กรองข้อมูลสำเร็จ!<br>
-                • จำนวนแถวที่กรอง: ${formatNumber(filteredData.length)} แถว<br>
-                • คอลัมน์ที่เลือก: ${filteredHeaders.length} คอลัมน์<br>
-                ${skippedRows > 0 ? `• ข้ามแถวที่ไม่สมบูรณ์: ${formatNumber(skippedRows)} แถว` : ''}`,
-                'success'
-            );
-            
-        } catch (error) {
-            console.error('Error processing CSV:', error);
-            showMessage('เกิดข้อผิดพลาดในการประมวลผล: ' + error.message, 'error');
-        } finally {
-            setProcessingState(false, 'filterBtn');
         }
-    }, 50);
-}
-
-// ============================================
-// ฟังก์ชันยูทิลิตี้
-// ============================================
-
-// แสดงข้อมูลไฟล์
-function showFileInfo(file) {
-    const fileInfo = document.getElementById('fileInfo');
-    const fileName = document.getElementById('fileName');
-    const fileSize = document.getElementById('fileSize');
-    
-    fileInfo.style.display = 'flex';
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-}
-
-// หา delimiter ที่ใช้ในไฟล์
-function getDelimiter() {
-    const delimiterValue = document.getElementById('delimiter').value;
-    return delimiterValue === '\\t' ? '\t' : delimiterValue;
-}
-
-// กลับไปเลือกคอลัมน์
-function goBackToColumnSelection() {
-    document.getElementById('previewCard').style.display = 'none';
-    document.getElementById('columnSelectionCard').style.display = 'block';
-}
-
-// รีเซ็ตเพื่อไฟล์ใหม่
-function resetToNewFile() {
-    resetUI();
-    document.getElementById('csvFileInput').value = '';
-    showMessage('พร้อมสำหรับไฟล์ใหม่', 'info');
-}
-
-// แสดงข้อความ
-function showMessage(message, type) {
-    const messageArea = document.getElementById('messageArea');
-    
-    let alertClass = 'alert-info';
-    let icon = 'info-circle';
-    
-    if (type === 'success') {
-        alertClass = 'alert-success';
-        icon = 'check-circle';
-    } else if (type === 'warning') {
-        alertClass = 'alert-warning';
-        icon = 'exclamation-triangle';
-    } else if (type === 'error') {
-        alertClass = 'alert-danger';
-        icon = 'exclamation-circle';
     }
-    
-    messageArea.innerHTML = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-${icon} me-3 fs-4"></i>
-                <div>${message}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
 }
 
-// รีเซ็ต UI
-function resetUI() {
-    document.getElementById('messageArea').innerHTML = '';
-    document.getElementById('settingsCard').style.display = 'none';
-    document.getElementById('fileInfo').style.display = 'none';
-    document.getElementById('columnSelectionCard').style.display = 'none';
-    document.getElementById('previewCard').style.display = 'none';
-    document.getElementById('resultCard').style.display = 'none';
-    document.getElementById('resultTable').style.display = 'none';
-    document.getElementById('noDataMessage').style.display = 'block';
-    document.getElementById('actionButtons').style.display = 'none';
-    
+// แสดงตัวอย่างข้อมูล
+function showPreview() {
     const previewTable = document.getElementById('previewTable');
-    const previewNoData = document.getElementById('previewNoData');
-    previewTable.innerHTML = '';
-    previewNoData.style.display = 'block';
     
-    // รีเซ็ตตัวแปร
-    currentCSVData = null;
-    currentHeaders = [];
-    filteredData = [];
-    filteredHeaders = [];
-    selectedColumns.clear();
-    allColumns = [];
-    totalRows = 0;
-    totalColumns = 0;
+    // อัปเดต header
+    const thead = previewTable.querySelector('thead tr');
+    thead.innerHTML = '';
+    columns.slice(0, 4).forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        thead.appendChild(th);
+    });
     
-    // รีเซ็ต search box
-    document.getElementById('columnSearch').value = '';
-}
-
-// ตั้งค่าสถานะกำลังประมวลผล
-function setProcessingState(isProcessing, buttonId) {
-    const button = document.getElementById(buttonId);
-    if (!button) return;
+    // อัปเดต body (แสดงสูงสุด 5 แถว)
+    const tbody = previewTable.querySelector('tbody');
+    tbody.innerHTML = '';
     
-    if (isProcessing) {
-        button.disabled = true;
-        button.innerHTML = `<span class="loading-spinner"></span>กำลังประมวลผล...`;
-    } else {
-        button.disabled = false;
-        if (buttonId === 'filterBtn') {
-            button.innerHTML = `<i class="fas fa-filter me-2"></i>กรองข้อมูลและดาวน์โหลด`;
-        }
+    const rowCount = Math.min(csvData.length, 5);
+    for (let i = 0; i < rowCount; i++) {
+        const row = csvData[i];
+        const tr = document.createElement('tr');
+        
+        columns.slice(0, 4).forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = row[col] || '';
+            tr.appendChild(td);
+        });
+        
+        tbody.appendChild(tr);
     }
 }
 
-// ============================================
-// ฟังก์ชันแสดงผลลัพธ์ (เพิ่มการแสดงผลจริง)
-// ============================================
-
-function displayFilteredResults(headers, data, originalColumnCount, skippedRows) {
-    console.log('กำลังแสดงผลลัพธ์...', data.length, 'แถว');
+// คำนวณพื้นที่
+document.getElementById('calculateBtn').addEventListener('click', function() {
+    const zoneColumn = document.getElementById('zoneColumn').value;
+    const areaColumn = document.getElementById('areaColumn').value;
+    const areaUnit = document.querySelector('input[name="areaUnit"]:checked').value;
     
-    // แสดงการ์ดผลลัพธ์
-    document.getElementById('resultCard').style.display = 'block';
+    // ตรวจสอบข้อมูล
+    if (!zoneColumn || !areaColumn) {
+        alert('กรุณาเลือกคอลัมน์โซนและคอลัมน์พื้นที่');
+        return;
+    }
+    
+    if (csvData.length === 0) {
+        alert('กรุณาอัปโหลดไฟล์ CSV ก่อน');
+        return;
+    }
+    
+    // แสดง progress bar
+    const progressBar = document.getElementById('progressBar');
+    const progressBarInner = progressBar.querySelector('.progress-bar');
+    progressBar.style.display = 'block';
+    progressBarInner.style.width = '0%';
+    
+    // คำนวณ (จำลองการโหลด)
+    setTimeout(() => {
+        calculateAreas(zoneColumn, areaColumn, areaUnit);
+        progressBarInner.style.width = '100%';
+        
+        // ซ่อน progress bar หลังจากเสร็จสิ้น
+        setTimeout(() => {
+            progressBar.style.display = 'none';
+        }, 500);
+    }, 500);
+});
+
+// ฟังก์ชันคำนวณพื้นที่
+function calculateAreas(zoneColumn, areaColumn, areaUnit) {
+    // รีเซ็ตผลลัพธ์
+    results = {
+        zones: {},
+        totalAreaRai: 0,
+        totalAreaSqm: 0,
+        totalPlots: 0,
+        plotDetails: []
+    };
+    
+    // ตัวนับสำหรับรหัสแปลง (ถ้าไม่มีคอลัมน์รหัส)
+    let plotCounter = 1;
+    
+    // วิเคราะห์ข้อมูล
+    csvData.forEach((row, index) => {
+        const zone = row[zoneColumn];
+        let areaValue = parseFloat(row[areaColumn]);
+        
+        // ตรวจสอบค่าพื้นที่
+        if (isNaN(areaValue) || areaValue <= 0) {
+            console.warn(`แถวที่ ${index + 1}: ค่าพื้นที่ไม่ถูกต้อง, ใช้ค่า 0 แทน`);
+            areaValue = 0;
+        }
+        
+        // แปลงหน่วยถ้าจำเป็น
+        let areaSqm, areaRai;
+        if (areaUnit === 'rai') {
+            // ถ้าหน่วยเป็นไร่ ให้แปลงเป็นตารางเมตร
+            areaRai = areaValue;
+            areaSqm = areaValue * RAI_TO_SQM;
+        } else {
+            // ถ้าหน่วยเป็นตารางเมตร ให้แปลงเป็นไร่
+            areaSqm = areaValue;
+            areaRai = areaValue / RAI_TO_SQM;
+        }
+        
+        // ค้นหารหัสแปลง (ใช้คอลัมน์แรกถ้าไม่มีคอลัมน์รหัส)
+        const plotId = row[columns[0]] || `แปลงที่ ${plotCounter}`;
+        
+        // เพิ่มข้อมูลแปลง
+        results.plotDetails.push({
+            id: plotId,
+            zone: zone,
+            areaRai: areaRai,
+            areaSqm: areaSqm,
+            rowData: row
+        });
+        
+        // อัปเดตข้อมูลโซน
+        if (!results.zones[zone]) {
+            results.zones[zone] = {
+                totalAreaRai: 0,
+                totalAreaSqm: 0,
+                plotCount: 0
+            };
+        }
+        
+        results.zones[zone].totalAreaRai += areaRai;
+        results.zones[zone].totalAreaSqm += areaSqm;
+        results.zones[zone].plotCount++;
+        
+        // อัปเดตผลรวมทั้งหมด
+        results.totalAreaRai += areaRai;
+        results.totalAreaSqm += areaSqm;
+        results.totalPlots++;
+        
+        plotCounter++;
+    });
+    
+    // แสดงผลลัพธ์
+    displayResults();
+}
+
+// แสดงผลลัพธ์
+function displayResults() {
+    // แสดงส่วนผลลัพธ์
+    document.getElementById('resultsSection').style.display = 'block';
     
     // อัปเดตสรุปผล
-    document.getElementById('totalRowsResult').textContent = formatNumber(data.length);
-    document.getElementById('filteredColumnsResult').textContent = headers.length;
-    document.getElementById('originalColumnsResult').textContent = originalColumnCount;
-    document.getElementById('fileEncodingResult').textContent = 
-        document.getElementById('inputEncoding').options[document.getElementById('inputEncoding').selectedIndex].text;
+    document.getElementById('totalPlots').textContent = results.totalPlots.toLocaleString();
+    document.getElementById('totalArea').textContent = results.totalAreaRai.toFixed(2);
+    document.getElementById('totalZones').textContent = Object.keys(results.zones).length;
     
-    // สร้างตาราง HTML
-    let tableHTML = '<table class="table table-hover">';
+    // สรุปตามโซน
+    const zoneSummaryTable = document.getElementById('zoneSummaryTable').querySelector('tbody');
+    zoneSummaryTable.innerHTML = '';
     
-    // Header
-    tableHTML += '<thead><tr>';
-    headers.forEach(header => {
-        tableHTML += `<th>${escapeHtml(header)}</th>`;
-    });
-    tableHTML += '</tr></thead>';
+    // เรียงลำดับโซนตามตัวอักษร
+    const sortedZones = Object.keys(results.zones).sort();
     
-    // Data (แสดงแค่ 100 แถวแรกถ้ามีมาก)
-    tableHTML += '<tbody>';
-    const displayRows = Math.min(100, data.length);
-    
-    if (data.length === 0) {
-        tableHTML += `<tr><td colspan="${headers.length}" class="text-center text-muted py-4">
-            <i class="fas fa-exclamation-circle me-2"></i>ไม่พบข้อมูลที่กรองได้
-        </td></tr>`;
-    } else {
-        for (let i = 0; i < displayRows; i++) {
-            const row = data[i];
-            tableHTML += '<tr>';
-            row.forEach(cell => {
-                tableHTML += `<td>${escapeHtml(cell)}</td>`;
-            });
-            tableHTML += '</tr>';
-        }
+    sortedZones.forEach(zone => {
+        const zoneData = results.zones[zone];
+        const percentage = (zoneData.totalAreaRai / results.totalAreaRai) * 100;
         
-        // ถ้ามีข้อมูลมากกว่าแสดงแค่บางส่วน
-        if (data.length > displayRows) {
-            tableHTML += `<tr><td colspan="${headers.length}" class="text-center text-muted py-3">
-                <i class="fas fa-info-circle me-2"></i>
-                แสดง ${displayRows} จาก ${formatNumber(data.length)} แถว
-            </td></tr>`;
-        }
-    }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><span class="badge bg-primary zone-badge">${zone}</span></td>
+            <td>${zoneData.plotCount.toLocaleString()}</td>
+            <td>${zoneData.totalAreaRai.toFixed(2)}</td>
+            <td>${zoneData.totalAreaSqm.toFixed(2)}</td>
+            <td>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar" role="progressbar" style="width: ${percentage}%"></div>
+                </div>
+                ${percentage.toFixed(1)}%
+            </td>
+        `;
+        zoneSummaryTable.appendChild(row);
+    });
     
-    tableHTML += '</tbody></table>';
+    // รายละเอียดแปลงทั้งหมด
+    const plotDetailsTable = document.getElementById('plotDetailsTable').querySelector('tbody');
+    plotDetailsTable.innerHTML = '';
     
-    // แสดงตาราง
-    const resultTable = document.getElementById('resultTable');
-    const noDataMessage = document.getElementById('noDataMessage');
+    results.plotDetails.forEach((plot, index) => {
+        const row = document.createElement('tr');
+        
+        // ตรวจสอบว่าพื้นที่เป็น 0 หรือไม่
+        const note = plot.areaRai === 0 ? '<span class="badge bg-warning text-dark">พื้นที่เป็น 0</span>' : '';
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${plot.id}</td>
+            <td>${plot.zone}</td>
+            <td>${plot.areaRai.toFixed(3)}</td>
+            <td>${plot.areaSqm.toFixed(2)}</td>
+            <td>${note}</td>
+        `;
+        plotDetailsTable.appendChild(row);
+    });
     
-    resultTable.innerHTML = tableHTML;
-    resultTable.style.display = 'block';
-    noDataMessage.style.display = 'none';
-    
-    // แสดงปุ่มการทำงาน
-    document.getElementById('actionButtons').style.display = 'flex';
-    
-    console.log('แสดงผลลัพธ์สำเร็จ');
+    // เลื่อนหน้าไปยังผลลัพธ์
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
 }
 
-// ============================================
-// ฟังก์ชันดาวน์โหลดและคัดลอก
-// ============================================
+// รีเซ็ตฟอร์ม
+document.getElementById('resetBtn').addEventListener('click', function() {
+    // รีเซ็ตฟอร์ม
+    document.getElementById('csvFile').value = '';
+    document.getElementById('zoneColumn').selectedIndex = 0;
+    document.getElementById('areaColumn').selectedIndex = 0;
+    document.getElementById('unitSqm').checked = true;
+    
+    // ซ่อนผลลัพธ์
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    // รีเซ็ตข้อมูล
+    csvData = [];
+    columns = [];
+    results = {
+        zones: {},
+        totalAreaRai: 0,
+        totalAreaSqm: 0,
+        totalPlots: 0,
+        plotDetails: []
+    };
+    
+    // รีเซ็ตตัวอย่าง
+    showPreview();
+});
 
-function copyFilteredData() {
-    if (filteredData.length === 0) {
-        showMessage('ไม่มีข้อมูลที่จะคัดลอก', 'error');
+// ดาวน์โหลดผลลัพธ์เป็น CSV
+document.getElementById('exportCsvBtn').addEventListener('click', function() {
+    if (results.plotDetails.length === 0) {
+        alert('ยังไม่มีข้อมูลที่จะส่งออก');
         return;
     }
     
-    try {
-        // สร้างข้อความ CSV (เฉพาะ 1000 แถวแรกถ้ามีข้อมูลมาก)
-        const dataToCopy = filteredData.length > 1000 ? filteredData.slice(0, 1000) : filteredData;
-        
-        let csvText = filteredHeaders.join(',') + '\n';
-        dataToCopy.forEach(row => {
-            csvText += row.join(',') + '\n';
-        });
-        
-        if (filteredData.length > 1000) {
-            csvText += `\n...และอีก ${formatNumber(filteredData.length - 1000)} แถว`;
-        }
-        
-        // คัดลอกไปยัง clipboard
-        navigator.clipboard.writeText(csvText).then(() => {
-            showMessage(`คัดลอกข้อมูลสำเร็จ! (${dataToCopy.length} แถว)`, 'success');
-        }).catch(err => {
-            console.error('Copy failed:', err);
-            showMessage('ไม่สามารถคัดลอกข้อมูลได้', 'error');
-        });
-        
-    } catch (error) {
-        console.error('Error copying data:', error);
-        showMessage('เกิดข้อผิดพลาดในการคัดลอกข้อมูล', 'error');
-    }
-}
-
-function downloadFilteredCSV() {
-    if (filteredData.length === 0) {
-        showMessage('ไม่มีข้อมูลที่จะดาวน์โหลด', 'error');
-        return;
-    }
+    // สร้างเนื้อหา CSV
+    let csvContent = "ลำดับ,รหัสแปลง,โซน,พื้นที่(ไร่),พื้นที่(ตร.ม.)\n";
     
-    try {
-        // สร้างข้อความ CSV
-        let csvText = '\uFEFF'; // UTF-8 BOM สำหรับภาษาไทย
-        csvText += filteredHeaders.join(',') + '\r\n';
-        
-        filteredData.forEach(row => {
-            const escapedRow = row.map(cell => {
-                if (cell.includes(',') || cell.includes('"') || cell.includes('\n') || cell.includes('\r')) {
-                    return '"' + cell.replace(/"/g, '""') + '"';
-                }
-                return cell;
-            });
-            csvText += escapedRow.join(',') + '\r\n';
-        });
-        
-        // สร้าง Blob
-        const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        
-        // สร้างลิงก์ดาวน์โหลด
-        const a = document.createElement('a');
-        const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const timeStr = now.getHours().toString().padStart(2, '0') + 
-                       now.getMinutes().toString().padStart(2, '0');
-        a.href = url;
-        a.download = `CSV_กรองแล้ว_${dateStr}_${timeStr}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // ล้าง URL
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-        
-        showMessage(`ดาวน์โหลดไฟล์ CSV สำเร็จ! (${formatNumber(filteredData.length)} แถว)`, 'success');
-        
-    } catch (error) {
-        console.error('Error downloading CSV:', error);
-        showMessage('เกิดข้อผิดพลาดในการดาวน์โหลด: ' + error.message, 'error');
-    }
-}
-
-// ============================================
-// ฟังก์ชันตั้งค่า Drag & Drop
-// ============================================
-
-function setupDragAndDrop() {
-    const dropArea = document.getElementById('dropArea');
-    const fileInput = document.getElementById('csvFileInput');
-    
-    // ป้องกันพฤติกรรม default
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
+    results.plotDetails.forEach((plot, index) => {
+        csvContent += `${index + 1},${plot.id},${plot.zone},${plot.areaRai.toFixed(3)},${plot.areaSqm.toFixed(2)}\n`;
     });
     
-    // ไฮไลต์เมื่อลากไฟล์มาวาง
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, highlight, false);
+    // เพิ่มสรุปโซน
+    csvContent += "\n\nสรุปตามโซน\nโซน,จำนวนแปลง,พื้นที่รวม(ไร่),พื้นที่รวม(ตร.ม.)\n";
+    
+    Object.keys(results.zones).sort().forEach(zone => {
+        const zoneData = results.zones[zone];
+        csvContent += `${zone},${zoneData.plotCount},${zoneData.totalAreaRai.toFixed(2)},${zoneData.totalAreaSqm.toFixed(2)}\n`;
     });
     
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, unhighlight, false);
+    // เพิ่มสรุปทั้งหมด
+    csvContent += `\nสรุปทั้งหมด\nจำนวนแปลงทั้งหมด,${results.totalPlots}\nพื้นที่รวมทั้งหมด(ไร่),${results.totalAreaRai.toFixed(2)}\nพื้นที่รวมทั้งหมด(ตร.ม.),${results.totalAreaSqm.toFixed(2)}\n`;
+    
+    // สร้างลิงก์ดาวน์โหลด
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `ผลการคำนวณพื้นที่_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
+
+// พิมพ์รายงาน
+document.getElementById('printBtn').addEventListener('click', function() {
+    window.print();
+});
+
+// โค้ดเริ่มต้น: แสดงตัวอย่างข้อมูลเมื่อโหลดหน้า
+document.addEventListener('DOMContentLoaded', function() {
+    // สร้างข้อมูลตัวอย่าง
+    const sampleData = [
+        {รหัสแปลง: 'A001', โซน: 'โซน A', พื้นที่_ตรม: '1600', เจ้าของ: 'สมชาย'},
+        {รหัสแปลง: 'A002', โซน: 'โซน A', พื้นที่_ตรม: '2400', เจ้าของ: 'สมหญิง'},
+        {รหัสแปลง: 'B001', โซน: 'โซน B', พื้นที่_ตรม: '3200', เจ้าของ: 'สมหมาย'},
+        {รหัสแปลง: 'B002', โซน: 'โซน B', พื้นที่_ตรม: '800', เจ้าของ: 'สมทรง'},
+        {รหัสแปลง: 'C001', โซน: 'โซน C', พื้นที่_ตรม: '4000', เจ้าของ: 'สมปอง'},
+        {รหัสแปลง: 'C002', โซน: 'โซน C', พื้นที่_ตรม: '1200', เจ้าของ: 'สมใจ'}
+    ];
+    
+    // แปลงเป็น CSV
+    const columnsSample = ['รหัสแปลง', 'โซน', 'พื้นที่_ตรม', 'เจ้าของ'];
+    let csvContentSample = columnsSample.join(',') + '\n';
+    sampleData.forEach(row => {
+        csvContentSample += `${row.รหัสแปลง},${row.โซน},${row.พื้นที่_ตรม},${row.เจ้าของ}\n`;
     });
     
-    // จัดการเมื่อวางไฟล์
-    dropArea.addEventListener('drop', handleDrop, false);
+    // ตั้งค่าข้อมูลตัวอย่าง
+    csvData = sampleData;
+    columns = columnsSample;
     
-    // เมื่อคลิกที่พื้นที่อัปโหลด
-    dropArea.addEventListener('click', function() {
-        fileInput.click();
-    });
+    // อัปเดต dropdowns และแสดงตัวอย่าง
+    updateColumnDropdowns();
+    showPreview();
     
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    function highlight() {
-        dropArea.classList.add('dragover');
-    }
-    
-    function unhighlight() {
-        dropArea.classList.remove('dragover');
-    }
-    
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        
-        if (files.length > 0) {
-            fileInput.files = files;
-            handleFileSelect({ target: fileInput });
-        }
-    }
-}
-
-// ============================================
-// ฟังก์ชันช่วยเหลือ
-// ============================================
-
-// รูปแบบขนาดไฟล์
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-// รูปแบบตัวเลข (เพิ่ม comma)
-function formatNumber(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-// Escape HTML
-function escapeHtml(text) {
-    if (text === null || text === undefined) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// ============================================
-// ฟังก์ชัน debug
-// ============================================
-
-// เปิด console log สำหรับ debug
-console.log('CSV Filter App โหลดเสร็จแล้ว');
-console.log('หากมีปัญหา ให้เปิด Developer Tools (F12) เพื่อดู error message');
+    console.log('ระบบคำนวณพื้นที่แปลงดินพร้อมใช้งาน');
+});
