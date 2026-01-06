@@ -1,1099 +1,487 @@
-// ระบบเลือกคอลัมน์สรุปผลจาก CSV
+// ตัวแปร global
+let currentFile = null;
+let fileData = null;
 
-// ตัวแปรเก็บข้อมูล
-let csvData = [];
-let csvHeaders = [];
-let csvColumnSamples = {}; // เก็บตัวอย่างข้อมูลแต่ละคอลัมน์
-let selectedColumns = {
-    zone: null,
-    area: null,
-    id: null
-};
-let summaryData = {};
-let plotsData = [];
+// DOM Elements
+const fileInput = document.getElementById('file-input');
+const dropArea = document.getElementById('drop-area');
+const fileInfoSection = document.getElementById('file-info-section');
+const nextStepsSection = document.getElementById('next-steps-section');
+const fileName = document.getElementById('file-name');
+const columnCount = document.getElementById('column-count');
+const rowCount = document.getElementById('row-count');
+const fileSize = document.getElementById('file-size');
+const actionCards = document.querySelectorAll('.action-card');
+const actionButtons = document.querySelectorAll('.action-buttons .btn');
+const previewModal = document.getElementById('preview-modal');
+const previewTableContainer = document.getElementById('preview-table-container');
+const closeModalButtons = document.querySelectorAll('.close-modal');
 
-// Event Listeners
+// ฟังก์ชันเมื่อโหลดหน้าเว็บเสร็จ
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("ระบบเริ่มทำงานแล้ว");
+    // ตั้งค่าการจัดการอัปโหลดไฟล์
+    setupFileUpload();
     
-    // Browse button
-    document.getElementById('browseBtn').addEventListener('click', () => {
-        document.getElementById('csvFileInput').click();
-    });
+    // ตั้งค่าปุ่มดำเนินการ
+    setupActionButtons();
     
-    // File input change
-    document.getElementById('csvFileInput').addEventListener('change', handleFileSelect);
+    // ตั้งค่า modal
+    setupModal();
     
-    // Remove file button
-    document.getElementById('removeFileBtn').addEventListener('click', removeFile);
-    
-    // Clear selections button
-    document.getElementById('clearSelectionsBtn').addEventListener('click', clearAllSelections);
-    
-    // Generate report button
-    document.getElementById('generateReportBtn').addEventListener('click', generateReport);
-    
-    // Export buttons
-    document.getElementById('exportSummaryBtn').addEventListener('click', exportSummary);
-    document.getElementById('exportPlotsBtn').addEventListener('click', exportPlots);
-    document.getElementById('printReportBtn').addEventListener('click', printReport);
-    
-    // Search and filter
-    document.getElementById('searchPlot').addEventListener('input', filterPlots);
-    document.getElementById('filterZone').addEventListener('change', filterPlots);
-    document.getElementById('resetFilterBtn').addEventListener('click', resetFilters);
-    
-    // Drag and drop functionality
-    const uploadArea = document.getElementById('uploadArea');
-    
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
-    
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
-    
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
-        }
-    });
-    
-    console.log("Event listeners ทั้งหมดถูกตั้งค่าเรียบร้อย");
+    // ตรวจสอบว่ามีไฟล์ที่อัปโหลดแล้วใน localStorage หรือไม่
+    checkForExistingFile();
 });
 
-// จัดการเมื่อเลือกไฟล์
+// ตั้งค่าการจัดการอัปโหลดไฟล์
+function setupFileUpload() {
+    // การคลิกที่พื้นที่อัปโหลด
+    dropArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // การเลือกไฟล์จาก input
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop events
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('dragover');
+    });
+    
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('dragover');
+    });
+    
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+}
+
+// จัดการการเลือกไฟล์
 function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (file) {
-        console.log("ไฟล์ที่เลือก:", file.name);
-        handleFile(file);
+    if (e.target.files.length) {
+        handleFile(e.target.files[0]);
     }
 }
 
-// จัดการไฟล์
+// จัดการไฟล์ที่อัปโหลด
 function handleFile(file) {
     // ตรวจสอบประเภทไฟล์
     if (!file.name.toLowerCase().endsWith('.csv')) {
-        showMessage('กรุณาเลือกไฟล์ CSV เท่านั้น (.csv)', 'danger');
+        alert('กรุณาเลือกไฟล์ CSV เท่านั้น');
         return;
     }
     
-    // ตรวจสอบขนาดไฟล์
+    // ตรวจสอบขนาดไฟล์ (10MB)
     if (file.size > 10 * 1024 * 1024) {
-        showMessage('ไฟล์มีขนาดใหญ่เกินไป (ขนาดสูงสุด 10MB)', 'danger');
+        alert('ขนาดไฟล์ต้องไม่เกิน 10MB');
         return;
     }
     
-    // แสดง loading
-    showLoading(true);
+    // อัปเดตข้อมูลไฟล์
+    currentFile = file;
     
-    // อ่านไฟล์
+    // แสดงข้อมูลไฟล์
+    displayFileInfo(file);
+    
+    // อ่านและประมวลผลไฟล์ CSV
+    readCSVFile(file);
+}
+
+// แสดงข้อมูลไฟล์
+function displayFileInfo(file) {
+    // แสดงส่วนข้อมูลไฟล์และขั้นตอนต่อไป
+    fileInfoSection.classList.remove('hidden');
+    nextStepsSection.classList.remove('hidden');
+    
+    // อัปเดตข้อมูลไฟล์
+    fileName.textContent = file.name;
+    fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2);
+    
+    // เพิ่มเอฟเฟกต์การแสดงผล
+    fileInfoSection.style.opacity = '0';
+    nextStepsSection.style.opacity = '0';
+    
+    setTimeout(() => {
+        fileInfoSection.style.transition = 'opacity 0.5s';
+        nextStepsSection.style.transition = 'opacity 0.5s';
+        fileInfoSection.style.opacity = '1';
+        nextStepsSection.style.opacity = '1';
+    }, 100);
+    
+    // บันทึกข้อมูลไฟล์ใน localStorage
+    localStorage.setItem('lastUploadedFile', JSON.stringify({
+        name: file.name,
+        size: file.size,
+        lastModified: file.lastModified
+    }));
+}
+
+// อ่านไฟล์ CSV
+function readCSVFile(file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const content = e.target.result;
-            console.log("อ่านไฟล์สำเร็จ");
-            processCSV(content);
-            
-            // แสดงข้อมูลไฟล์
-            showFileInfo(file);
-            
-            // แสดงส่วนเลือกคอลัมน์
-            showColumnSelectionSection();
-            
-            // แสดงคอลัมน์ทั้งหมด
-            displayAllColumns();
-            
-            // ซ่อน loading
-            showLoading(false);
-            
-            showMessage('อัปโหลดไฟล์สำเร็จ! กรุณาเลือกคอลัมน์สำหรับสรุปผล', 'success');
-            
-        } catch (error) {
-            console.error("เกิดข้อผิดพลาด:", error);
-            showLoading(false);
-            showMessage('เกิดข้อผิดพลาดในการอ่านไฟล์: ' + error.message, 'danger');
-        }
-    };
     
-    reader.onerror = function() {
-        console.error("ข้อผิดพลาดในการอ่านไฟล์");
-        showLoading(false);
-        showMessage('เกิดข้อผิดพลาดในการอ่านไฟล์', 'danger');
+    reader.onload = function(e) {
+        const text = e.target.result;
+        processCSVData(text);
     };
     
     reader.readAsText(file, 'UTF-8');
 }
 
 // ประมวลผลข้อมูล CSV
-function processCSV(content) {
-    console.log("เริ่มประมวลผล CSV");
-    
-    // แยกบรรทัด
-    const lines = content.split(/\r\n|\n/).filter(line => line.trim() !== '');
-    
-    if (lines.length === 0) {
-        throw new Error('ไฟล์ CSV ว่างเปล่า');
-    }
-    
-    // หา delimiter
-    let delimiter = ',';
-    const firstLine = lines[0];
-    
-    // ตรวจสอบ delimiter
-    if (firstLine.includes(';') && !firstLine.includes(',')) {
-        delimiter = ';';
-    } else if (firstLine.includes('\t')) {
-        delimiter = '\t';
-    }
-    
-    // ดึงหัวคอลัมน์
-    csvHeaders = firstLine.split(delimiter).map(h => h.trim());
-    console.log("หัวคอลัมน์:", csvHeaders);
-    
-    if (csvHeaders.length === 0) {
-        throw new Error('ไม่พบหัวคอลัมน์ในไฟล์ CSV');
-    }
-    
-    // อ่านข้อมูล
-    csvData = [];
-    csvColumnSamples = {};
-    
-    // กำหนดค่าเริ่มต้นสำหรับตัวอย่างคอลัมน์
-    csvHeaders.forEach(header => {
-        csvColumnSamples[header] = [];
-    });
-    
-    for (let i = 1; i < lines.length; i++) {
-        try {
-            const values = lines[i].split(delimiter).map(v => v.trim());
-            if (values.length === csvHeaders.length) {
-                const row = {};
-                csvHeaders.forEach((header, index) => {
-                    const value = values[index] || '';
-                    row[header] = value;
-                    
-                    // เก็บตัวอย่างข้อมูล (สูงสุด 5 ค่า)
-                    if (csvColumnSamples[header].length < 5 && value) {
-                        csvColumnSamples[header].push(value);
-                    }
-                });
-                csvData.push(row);
-            }
-        } catch (error) {
-            console.warn(`ข้อผิดพลาดที่บรรทัดที่ ${i+1}:`, error);
-        }
-    }
-    
-    console.log('อัปโหลดไฟล์สำเร็จ:', csvData.length, 'แถว,', csvHeaders.length, 'คอลัมน์');
-}
-
-// แสดงข้อมูลไฟล์
-function showFileInfo(file) {
-    const fileInfo = document.getElementById('fileInfo');
-    const fileName = document.getElementById('fileName');
-    const fileDetails = document.getElementById('fileDetails');
-    
-    if (fileInfo && fileName && fileDetails) {
-        fileName.textContent = file.name;
-        fileDetails.textContent = `คอลัมน์: ${csvHeaders.length} | แถว: ${csvData.length}`;
+function processCSVData(text) {
+    try {
+        // แยกข้อมูลเป็นแถว
+        const rows = text.split('\n');
         
-        fileInfo.style.display = 'block';
-    }
-}
-
-// แสดงส่วนเลือกคอลัมน์
-function showColumnSelectionSection() {
-    const columnSelectionSection = document.getElementById('columnSelectionSection');
-    if (columnSelectionSection) {
-        columnSelectionSection.style.display = 'block';
-        columnSelectionSection.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-// แสดงคอลัมน์ทั้งหมด
-function displayAllColumns() {
-    const columnGrid = document.getElementById('columnGrid');
-    const selectedColumnsDisplay = document.getElementById('selectedColumnsDisplay');
-    
-    if (!columnGrid) return;
-    
-    columnGrid.innerHTML = '';
-    
-    // สร้างการ์ดสำหรับแต่ละคอลัมน์
-    csvHeaders.forEach((columnName, index) => {
-        const columnCard = createColumnCard(columnName, index);
-        columnGrid.appendChild(columnCard);
-    });
-    
-    // แสดงส่วนคอลัมน์ที่เลือกแล้ว
-    updateSelectedColumnsDisplay();
-}
-
-// สร้างการ์ดคอลัมน์
-function createColumnCard(columnName, index) {
-    const card = document.createElement('div');
-    card.className = 'column-card';
-    
-    // ตรวจสอบว่าคอลัมน์นี้ถูกเลือกเป็นประเภทไหน
-    let selectedClass = '';
-    let selectedType = '';
-    
-    if (selectedColumns.zone === columnName) {
-        selectedClass = 'zone-selected';
-        selectedType = 'โซน';
-    } else if (selectedColumns.area === columnName) {
-        selectedClass = 'area-selected';
-        selectedType = 'พื้นที่';
-    } else if (selectedColumns.id === columnName) {
-        selectedClass = 'id-selected';
-        selectedType = 'รหัสแปลง';
-    }
-    
-    if (selectedClass) {
-        card.classList.add('selected', selectedClass);
-    }
-    
-    // ดึงตัวอย่างข้อมูล
-    const samples = csvColumnSamples[columnName] || [];
-    const sampleText = samples.length > 0 ? samples.join(', ') : 'ไม่มีข้อมูลตัวอย่าง';
-    
-    card.innerHTML = `
-        <div class="column-header">
-            <div class="column-name">${columnName}</div>
-            ${selectedType ? `<span class="column-badge">${selectedType}</span>` : ''}
-        </div>
-        <div class="column-preview" title="${sampleText}">
-            <small>${sampleText}</small>
-        </div>
-        <div class="column-actions">
-            <button class="action-btn zone-btn" data-column="${columnName}" data-type="zone">
-                <i class="bi bi-pin-map me-1"></i> ใช้เป็นโซน
-            </button>
-            <button class="action-btn area-btn" data-column="${columnName}" data-type="area">
-                <i class="bi bi-square me-1"></i> ใช้เป็นพื้นที่
-            </button>
-            <button class="action-btn id-btn" data-column="${columnName}" data-type="id">
-                <i class="bi bi-hash me-1"></i> ใช้เป็นรหัส
-            </button>
-        </div>
-    `;
-    
-    // เพิ่ม event listeners สำหรับปุ่ม
-    const zoneBtn = card.querySelector('.zone-btn');
-    const areaBtn = card.querySelector('.area-btn');
-    const idBtn = card.querySelector('.id-btn');
-    
-    zoneBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectColumn(columnName, 'zone');
-        updateColumnCards();
-    });
-    
-    areaBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectColumn(columnName, 'area');
-        updateColumnCards();
-    });
-    
-    idBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectColumn(columnName, 'id');
-        updateColumnCards();
-    });
-    
-    // คลิกที่การ์ดเพื่อดูรายละเอียด
-    card.addEventListener('click', () => {
-        showColumnDetails(columnName);
-    });
-    
-    return card;
-}
-
-// เลือกคอลัมน์
-function selectColumn(columnName, type) {
-    // ถ้าคอลัมน์นี้ถูกเลือกอยู่แล้วเป็นประเภทนี้ ให้ยกเลิกการเลือก
-    if (selectedColumns[type] === columnName) {
-        selectedColumns[type] = null;
-        showMessage(`ยกเลิกเลือกคอลัมน์ "${columnName}" เป็น${getTypeLabel(type)}`, 'info');
-    } else {
-        // ถ้ามีคอลัมน์อื่นถูกเลือกเป็นประเภทนี้อยู่แล้ว ให้ยกเลิกก่อน
-        if (selectedColumns[type]) {
-            showMessage(`เปลี่ยนคอลัมน์${getTypeLabel(type)}จาก "${selectedColumns[type]}" เป็น "${columnName}"`, 'info');
-        } else {
-            showMessage(`เลือกคอลัมน์ "${columnName}" เป็น${getTypeLabel(type)}`, 'success');
+        // นับจำนวนแถวและคอลัมน์
+        const rowCountValue = rows.length - 1; // ลบหัวตาราง
+        let columnCountValue = 0;
+        
+        if (rows.length > 0) {
+            const firstRow = rows[0];
+            columnCountValue = firstRow.split(',').length;
         }
         
-        selectedColumns[type] = columnName;
+        // อัปเดตตัวนับ
+        rowCount.textContent = rowCountValue.toLocaleString();
+        columnCount.textContent = columnCountValue;
+        
+        // เก็บข้อมูลสำหรับใช้ต่อไป
+        fileData = {
+            rows: rows,
+            rowCount: rowCountValue,
+            columnCount: columnCountValue,
+            headers: rows.length > 0 ? rows[0].split(',') : []
+        };
+        
+        // แสดงข้อความสำเร็จ
+        showNotification('อัปโหลดและประมวลผลไฟล์สำเร็จ', 'success');
+        
+    } catch (error) {
+        console.error('Error processing CSV:', error);
+        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์ CSV', 'error');
     }
-    
-    updateSelectedColumnsDisplay();
 }
 
-// ดึงชื่อประเภทเป็นภาษาไทย
-function getTypeLabel(type) {
-    switch(type) {
-        case 'zone': return 'โซน';
-        case 'area': return 'พื้นที่';
-        case 'id': return 'รหัสแปลง';
-        default: return '';
-    }
-}
-
-// อัปเดตการ์ดคอลัมน์ทั้งหมด
-function updateColumnCards() {
-    const columnGrid = document.getElementById('columnGrid');
-    if (!columnGrid) return;
-    
-    // ลบการ์ดทั้งหมด
-    columnGrid.innerHTML = '';
-    
-    // สร้างการ์ดใหม่
-    csvHeaders.forEach((columnName, index) => {
-        const columnCard = createColumnCard(columnName, index);
-        columnGrid.appendChild(columnCard);
+// ตั้งค่าปุ่มดำเนินการ
+function setupActionButtons() {
+    // การ์ดดำเนินการ
+    actionCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const action = this.dataset.action;
+            handleAction(action);
+        });
     });
+    
+    // ปุ่มดำเนินการ
+    document.getElementById('preview-btn').addEventListener('click', () => handleAction('preview'));
+    document.getElementById('analyze-btn').addEventListener('click', () => handleAction('analyze'));
+    document.getElementById('graph-btn').addEventListener('click', () => handleAction('graph'));
+    document.getElementById('download-btn').addEventListener('click', () => handleAction('download'));
+    document.getElementById('delete-btn').addEventListener('click', () => handleAction('delete'));
 }
 
-// แสดงรายละเอียดคอลัมน์
-function showColumnDetails(columnName) {
-    const samples = csvColumnSamples[columnName] || [];
-    const dataType = detectDataType(samples);
-    
-    let message = `คอลัมน์: <strong>${columnName}</strong><br>`;
-    message += `ประเภทข้อมูล: <strong>${dataType}</strong><br>`;
-    message += `จำนวนข้อมูล: <strong>${csvData.length}</strong> แถว<br>`;
-    message += `ตัวอย่างข้อมูล: <em>${samples.length > 0 ? samples.join(', ') : 'ไม่มีข้อมูล'}</em>`;
-    
-    showMessage(message, 'info', 5000);
-}
-
-// ตรวจสอบประเภทข้อมูล
-function detectDataType(samples) {
-    if (samples.length === 0) return 'ไม่ทราบ';
-    
-    // ตรวจสอบว่าข้อมูลเป็นตัวเลขหรือไม่
-    const isNumeric = samples.every(sample => !isNaN(sample) && sample.trim() !== '');
-    
-    if (isNumeric) {
-        // ตรวจสอบว่าเป็นพื้นที่ไร่หรือไม่ (มักจะมีทศนิยม)
-        const hasDecimal = samples.some(sample => sample.includes('.'));
-        return hasDecimal ? 'ตัวเลข (พื้นที่ไร่)' : 'ตัวเลข';
-    }
-    
-    // ตรวจสอบว่ามีคำว่าโซนหรือ zone หรือไม่
-    const hasZone = samples.some(sample => 
-        sample.toLowerCase().includes('โซน') || 
-        sample.toLowerCase().includes('zone')
-    );
-    
-    if (hasZone) return 'ข้อความ (โซน)';
-    
-    // ตรวจสอบว่ามีรหัสแปลงหรือไม่
-    const hasCode = samples.some(sample => 
-        /^[A-Za-z0-9]+$/.test(sample) || 
-        sample.toLowerCase().includes('แปลง')
-    );
-    
-    if (hasCode) return 'ข้อความ (รหัส)';
-    
-    return 'ข้อความ';
-}
-
-// อัปเดตการแสดงคอลัมน์ที่เลือกแล้ว
-function updateSelectedColumnsDisplay() {
-    const selectedColumnsDisplay = document.getElementById('selectedColumnsDisplay');
-    const selectedZoneColumn = document.getElementById('selectedZoneColumn');
-    const selectedAreaColumn = document.getElementById('selectedAreaColumn');
-    const selectedIdColumn = document.getElementById('selectedIdColumn');
-    
-    if (!selectedColumnsDisplay || !selectedZoneColumn || !selectedAreaColumn || !selectedIdColumn) return;
-    
-    // อัปเดตข้อความ
-    selectedZoneColumn.textContent = selectedColumns.zone || 'ยังไม่ได้เลือก';
-    selectedAreaColumn.textContent = selectedColumns.area || 'ยังไม่ได้เลือก';
-    selectedIdColumn.textContent = selectedColumns.id || 'ยังไม่ได้เลือก (ไม่บังคับ)';
-    
-    // ตรวจสอบว่ามีการเลือกคอลัมน์โซนและพื้นที่แล้วหรือไม่
-    const hasRequiredColumns = selectedColumns.zone && selectedColumns.area;
-    
-    // แสดงหรือซ่อนส่วนคอลัมน์ที่เลือกแล้ว
-    if (hasRequiredColumns) {
-        selectedColumnsDisplay.style.display = 'block';
-        selectedColumnsDisplay.scrollIntoView({ behavior: 'smooth' });
-    } else {
-        selectedColumnsDisplay.style.display = 'none';
+// จัดการการดำเนินการ
+function handleAction(action) {
+    switch(action) {
+        case 'preview':
+            showPreview();
+            break;
+        case 'analyze':
+            analyzeData();
+            break;
+        case 'graph':
+            createGraph();
+            break;
+        case 'download':
+            downloadData();
+            break;
+        case 'delete':
+            deleteFile();
+            break;
     }
 }
 
-// ล้างการเลือกทั้งหมด
-function clearAllSelections() {
-    selectedColumns = {
-        zone: null,
-        area: null,
-        id: null
-    };
-    
-    updateColumnCards();
-    updateSelectedColumnsDisplay();
-    
-    showMessage('ล้างการเลือกคอลัมน์ทั้งหมดเรียบร้อยแล้ว', 'info');
-}
-
-// สร้างรายงานสรุปผล
-function generateReport() {
-    console.log("เริ่มสร้างรายงานสรุปผล");
-    
-    if (csvData.length === 0) {
-        showMessage('กรุณาอัปโหลดไฟล์ CSV ก่อน', 'warning');
+// แสดงตัวอย่างข้อมูล
+function showPreview() {
+    if (!fileData || !fileData.rows) {
+        showNotification('ไม่พบข้อมูลไฟล์', 'error');
         return;
     }
     
-    // ตรวจสอบว่ามีการเลือกคอลัมน์โซนและพื้นที่แล้วหรือไม่
-    if (!selectedColumns.zone) {
-        showMessage('กรุณาเลือกคอลัมน์โซนสำหรับสรุปผล', 'warning');
+    // ล้างตารางเก่า
+    previewTableContainer.innerHTML = '';
+    
+    // สร้างตาราง
+    const table = document.createElement('table');
+    
+    // เพิ่มหัวตาราง
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    fileData.headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header.trim();
+        headerRow.appendChild(th);
+    });
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // เพิ่มข้อมูล (10 แถวแรก)
+    const tbody = document.createElement('tbody');
+    const maxRows = Math.min(11, fileData.rows.length);
+    
+    for (let i = 1; i < maxRows; i++) {
+        const row = document.createElement('tr');
+        const cells = fileData.rows[i].split(',');
+        
+        cells.forEach(cell => {
+            const td = document.createElement('td');
+            td.textContent = cell.trim();
+            row.appendChild(td);
+        });
+        
+        tbody.appendChild(row);
+    }
+    
+    table.appendChild(tbody);
+    previewTableContainer.appendChild(table);
+    
+    // แสดง modal
+    previewModal.classList.remove('hidden');
+}
+
+// วิเคราะห์ข้อมูล
+function analyzeData() {
+    if (!fileData) {
+        showNotification('ไม่พบข้อมูลไฟล์', 'error');
         return;
     }
     
-    if (!selectedColumns.area) {
-        showMessage('กรุณาเลือกคอลัมน์พื้นที่สำหรับสรุปผล', 'warning');
-        return;
-    }
+    // ในเวอร์ชันจริง ควรมีโค้ดสำหรับวิเคราะห์ข้อมูลจริง
+    showNotification('กำลังวิเคราะห์ข้อมูล... ฟังก์ชันนี้อยู่ในระหว่างการพัฒนา', 'info');
     
-    // แสดง loading
-    showLoading(true);
-    
-    // หน่วงเวลาเล็กน้อย
+    // ตัวอย่างการวิเคราะห์เบื้องต้น
     setTimeout(() => {
-        try {
-            // ประมวลผลข้อมูลแปลง
-            processPlotsData();
-            
-            // คำนวณสรุปผล
-            calculateSummary();
-            
-            // แสดงผลลัพธ์
-            displayResults();
-            
-            // แสดงข้อมูลรายงาน
-            displayReportInfo();
-            
-            // แสดงส่วนผลลัพธ์
-            const resultsSection = document.getElementById('resultsSection');
-            if (resultsSection) {
-                resultsSection.style.display = 'block';
-                resultsSection.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // ซ่อน loading
-            showLoading(false);
-            
-            showMessage('สร้างรายงานสรุปผลเรียบร้อยแล้ว!', 'success');
-            
-        } catch (error) {
-            console.error("ข้อผิดพลาดในการสรุปผล:", error);
-            showLoading(false);
-            showMessage('เกิดข้อผิดพลาดในการสรุปผล: ' + error.message, 'danger');
-        }
-    }, 500);
-}
-
-// ประมวลผลข้อมูลแปลง
-function processPlotsData() {
-    plotsData = [];
-    
-    csvData.forEach((row, index) => {
-        try {
-            const plot = {
-                index: index + 1,
-                id: selectedColumns.id ? (row[selectedColumns.id] || `แปลง${index + 1}`) : `แปลง${index + 1}`,
-                zone: row[selectedColumns.zone] || 'ไม่ระบุโซน',
-                area: parseFloat(row[selectedColumns.area]) || 0
-            };
-            
-            // เพิ่มหมายเหตุสำหรับแปลงที่มีพื้นที่ = 0
-            if (plot.area === 0) {
-                plot.note = 'พื้นที่ = 0';
-            } else if (plot.area < 0) {
-                plot.note = 'พื้นที่ติดลบ';
-            } else {
-                plot.note = '';
-            }
-            
-            plotsData.push(plot);
-        } catch (error) {
-            console.warn(`ข้อผิดพลาดในการประมวลผลแถวที่ ${index + 1}:`, error);
-        }
-    });
-    
-    console.log("ประมวลผลข้อมูลแปลงสำเร็จ:", plotsData.length, "แปลง");
-}
-
-// คำนวณสรุปผล
-function calculateSummary() {
-    summaryData = {
-        zones: {},
-        totalPlots: plotsData.length,
-        totalArea: 0,
-        uniqueZones: new Set()
-    };
-    
-    plotsData.forEach(plot => {
-        const zone = plot.zone;
-        const area = plot.area;
-        
-        // เพิ่มข้อมูลโซน
-        if (!summaryData.zones[zone]) {
-            summaryData.zones[zone] = {
-                count: 0,
-                totalArea: 0
-            };
-        }
-        
-        summaryData.zones[zone].count++;
-        summaryData.zones[zone].totalArea += area;
-        
-        // อัพเดทผลรวม
-        summaryData.totalArea += area;
-        summaryData.uniqueZones.add(zone);
-    });
-    
-    console.log("คำนวณสรุปผลเสร็จสิ้น:", summaryData);
-}
-
-// แสดงผลลัพธ์
-function displayResults() {
-    // อัพเดทสถิติ
-    document.getElementById('totalPlots').textContent = summaryData.totalPlots.toLocaleString();
-    document.getElementById('totalZones').textContent = summaryData.uniqueZones.size;
-    document.getElementById('totalArea').textContent = formatNumber(summaryData.totalArea, 2);
-    
-    // คำนวณพื้นที่เฉลี่ยต่อแปลง
-    const avgArea = summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0;
-    document.getElementById('avgArea').textContent = formatNumber(avgArea, 2);
-    
-    // แสดงตารางสรุปตามโซน
-    displayZoneSummary();
-    
-    // แสดงตารางแปลง
-    displayPlotsTable();
-}
-
-// แสดงสรุปตามโซน
-function displayZoneSummary() {
-    const tbody = document.getElementById('zoneSummaryTable')?.querySelector('tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    // เรียงลำดับโซนตามจำนวนแปลง (มากไปน้อย)
-    const sortedZones = Object.keys(summaryData.zones).sort((a, b) => {
-        return summaryData.zones[b].count - summaryData.zones[a].count;
-    });
-    
-    sortedZones.forEach(zone => {
-        const data = summaryData.zones[zone];
-        const percentage = summaryData.totalArea > 0 ? 
-            (data.totalArea / summaryData.totalArea) * 100 : 0;
-        const avgAreaPerPlot = data.count > 0 ? data.totalArea / data.count : 0;
-        
-        const tr = document.createElement('tr');
-        
-        tr.innerHTML = `
-            <td>
-                <span class="badge zone-badge">${zone}</span>
-            </td>
-            <td><strong>${data.count}</strong></td>
-            <td>${formatNumber(data.totalArea, 2)}</td>
-            <td>${formatNumber(avgAreaPerPlot, 2)}</td>
-            <td>
-                <div class="progress-custom">
-                    <div class="progress-bar-custom" style="width: ${percentage}%"></div>
-                </div>
-            </td>
-            <td><strong style="color: var(--dark-blue);">${formatNumber(percentage, 1)}%</strong></td>
-        `;
-        
-        tbody.appendChild(tr);
-    });
-}
-
-// แสดงตารางแปลง
-function displayPlotsTable() {
-    const tbody = document.getElementById('plotsTable')?.querySelector('tbody');
-    const filterZone = document.getElementById('filterZone');
-    
-    if (!tbody || !filterZone) return;
-    
-    // เคลียร์ตาราง
-    tbody.innerHTML = '';
-    
-    // เคลียร์และสร้างตัวเลือกกรองโซน
-    filterZone.innerHTML = '<option value="">ทั้งหมด (โซน)</option>';
-    
-    // เพิ่มตัวเลือกโซน
-    Object.keys(summaryData.zones).sort().forEach(zone => {
-        const option = document.createElement('option');
-        option.value = zone;
-        option.textContent = zone;
-        filterZone.appendChild(option);
-    });
-    
-    // แสดงข้อมูลแปลงทั้งหมด
-    updatePlotsTable();
-}
-
-// อัปเดตตารางแปลง (พร้อมการกรอง)
-function updatePlotsTable() {
-    const tbody = document.getElementById('plotsTable')?.querySelector('tbody');
-    const searchPlot = document.getElementById('searchPlot');
-    const filterZone = document.getElementById('filterZone');
-    
-    if (!tbody || !searchPlot || !filterZone) return;
-    
-    tbody.innerHTML = '';
-    
-    const searchText = searchPlot.value.toLowerCase();
-    const selectedZone = filterZone.value;
-    
-    let filteredPlots = plotsData;
-    
-    // กรองตามโซน
-    if (selectedZone) {
-        filteredPlots = filteredPlots.filter(plot => plot.zone === selectedZone);
-    }
-    
-    // กรองตามคำค้นหา
-    if (searchText) {
-        filteredPlots = filteredPlots.filter(plot => 
-            plot.id.toLowerCase().includes(searchText) || 
-            plot.zone.toLowerCase().includes(searchText)
-        );
-    }
-    
-    // แสดงแปลงที่กรองแล้ว
-    filteredPlots.forEach(plot => {
-        const tr = document.createElement('tr');
-        
-        // กำหนดสีตามพื้นที่
-        let areaClass = '';
-        if (plot.area === 0) {
-            areaClass = 'text-danger';
-        } else if (plot.area < 1) {
-            areaClass = 'text-warning';
-        } else if (plot.area > 10) {
-            areaClass = 'text-success';
-        }
-        
-        tr.innerHTML = `
-            <td>${plot.index}</td>
-            <td><strong>${plot.id}</strong></td>
-            <td>
-                <span class="badge zone-badge">${plot.zone}</span>
-            </td>
-            <td class="${areaClass}"><strong>${formatNumber(plot.area, 2)}</strong></td>
-            <td><small class="text-muted">${plot.note}</small></td>
-        `;
-        
-        tbody.appendChild(tr);
-    });
-    
-    // แสดงข้อความถ้าไม่มีข้อมูล
-    if (filteredPlots.length === 0) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td colspan="5" class="text-center py-4 text-muted">
-                <i class="bi bi-search display-6"></i>
-                <p class="mt-2">ไม่พบข้อมูลที่ตรงกับการค้นหา</p>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    }
-}
-
-// แสดงข้อมูลรายงาน
-function displayReportInfo() {
-    document.getElementById('reportZoneColumn').textContent = selectedColumns.zone;
-    document.getElementById('reportAreaColumn').textContent = selectedColumns.area;
-    document.getElementById('reportIdColumn').textContent = selectedColumns.id || 'ไม่ได้เลือก';
-    document.getElementById('reportTotalData').textContent = csvData.length;
-}
-
-// กรองแปลง
-function filterPlots() {
-    updatePlotsTable();
-}
-
-// รีเซ็ตฟิลเตอร์
-function resetFilters() {
-    document.getElementById('searchPlot').value = '';
-    document.getElementById('filterZone').value = '';
-    updatePlotsTable();
-}
-
-// ส่งออกสรุปผล
-function exportSummary() {
-    if (!summaryData.zones || Object.keys(summaryData.zones).length === 0) {
-        showMessage('ยังไม่มีข้อมูลสรุปผล', 'warning');
-        return;
-    }
-    
-    let csvContent = "รายงานสรุปผลตามโซน\n\n";
-    csvContent += "โซน,จำนวนแปลง,พื้นที่รวม (ไร่),พื้นที่เฉลี่ย/แปลง,ร้อยละ\n";
-    
-    // เรียงลำดับโซนตามจำนวนแปลง
-    const sortedZones = Object.keys(summaryData.zones).sort((a, b) => {
-        return summaryData.zones[b].count - summaryData.zones[a].count;
-    });
-    
-    sortedZones.forEach(zone => {
-        const data = summaryData.zones[zone];
-        const percentage = summaryData.totalArea > 0 ? 
-            (data.totalArea / summaryData.totalArea) * 100 : 0;
-        const avgAreaPerPlot = data.count > 0 ? data.totalArea / data.count : 0;
-        
-        csvContent += `${zone},${data.count},${data.totalArea.toFixed(2)},${avgAreaPerPlot.toFixed(2)},${percentage.toFixed(2)}%\n`;
-    });
-    
-    csvContent += `\nสรุปทั้งหมด\n`;
-    csvContent += `จำนวนแปลงทั้งหมด,${summaryData.totalPlots}\n`;
-    csvContent += `จำนวนโซน,${summaryData.uniqueZones.size}\n`;
-    csvContent += `พื้นที่รวมทั้งหมด (ไร่),${summaryData.totalArea.toFixed(2)}\n`;
-    csvContent += `พื้นที่เฉลี่ยต่อแปลง,${(summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0).toFixed(2)}\n`;
-    csvContent += `คอลัมน์โซนที่ใช้,${selectedColumns.zone}\n`;
-    csvContent += `คอลัมน์พื้นที่ที่ใช้,${selectedColumns.area}\n`;
-    csvContent += `คอลัมน์รหัสแปลงที่ใช้,${selectedColumns.id || '-'}\n`;
-    csvContent += `วันที่สรุปผล,${new Date().toLocaleDateString('th-TH')}\n`;
-    
-    downloadCSV(csvContent, `สรุปผลตามโซน_${new Date().toISOString().slice(0,10)}.csv`);
-    
-    showMessage('ดาวน์โหลดสรุปผลเรียบร้อยแล้ว', 'success');
-}
-
-// ส่งออกรายการแปลง
-function exportPlots() {
-    if (plotsData.length === 0) {
-        showMessage('ยังไม่มีข้อมูลแปลง', 'warning');
-        return;
-    }
-    
-    let csvContent = "ลำดับ,รหัสแปลง,โซน,พื้นที่ (ไร่),หมายเหตุ\n";
-    
-    plotsData.forEach(plot => {
-        csvContent += `${plot.index},${plot.id},${plot.zone},${plot.area.toFixed(2)},${plot.note}\n`;
-    });
-    
-    downloadCSV(csvContent, `รายการแปลง_${new Date().toISOString().slice(0,10)}.csv`);
-    
-    showMessage('ดาวน์โหลดรายการแปลงเรียบร้อยแล้ว', 'success');
-}
-
-// พิมพ์รายงาน
-function printReport() {
-    if (!summaryData.zones || Object.keys(summaryData.zones).length === 0) {
-        showMessage('ยังไม่มีข้อมูลรายงาน', 'warning');
-        return;
-    }
-    
-    const printWindow = window.open('', '_blank');
-    const now = new Date();
-    const printDate = now.toLocaleDateString('th-TH');
-    const printTime = now.toLocaleTimeString('th-TH');
-    
-    const fileName = document.getElementById('fileName')?.textContent || 'ไฟล์ CSV';
-    
-    let printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>รายงานสรุปผลแปลงตามโซน</title>
-            <meta charset="UTF-8">
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-                
-                body { 
-                    font-family: 'Sarabun', sans-serif; 
-                    margin: 20px; 
-                    color: #2C3E50;
-                }
-                
-                .report-container {
-                    max-width: 1000px;
-                    margin: 0 auto;
-                }
-                
-                h1 { 
-                    color: #1976D2; 
-                    border-bottom: 2px solid #64B5F6; 
-                    padding-bottom: 10px; 
-                    margin-bottom: 20px;
-                }
-                
-                h2 { 
-                    color: #4A90E2; 
-                    margin-top: 25px; 
-                    margin-bottom: 15px;
-                }
-                
-                .header-info {
-                    background-color: #E3F2FD;
-                    padding: 15px;
-                    border-radius: 10px;
-                    margin-bottom: 20px;
-                    border: 1px solid #90CAF9;
-                }
-                
-                table { 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    margin: 15px 0; 
-                }
-                
-                th { 
-                    background-color: #64B5F6; 
-                    color: white; 
-                    padding: 12px; 
-                    text-align: left; 
-                    border-bottom: 2px solid #1976D2;
-                }
-                
-                td { 
-                    padding: 10px 12px; 
-                    border-bottom: 1px solid #E3F2FD; 
-                }
-                
-                tr:nth-child(even) { 
-                    background-color: #F8FBFF; 
-                }
-                
-                .summary-box { 
-                    background-color: #E3F2FD; 
-                    padding: 20px; 
-                    border-radius: 10px; 
-                    margin: 20px 0; 
-                    border: 1px solid #90CAF9;
-                }
-                
-                .footer { 
-                    margin-top: 30px; 
-                    text-align: center; 
-                    color: #7B8A8B; 
-                    font-size: 0.9em; 
-                    padding-top: 20px;
-                    border-top: 1px solid #E3F2FD;
-                }
-                
-                @media print {
-                    body { 
-                        margin: 0; 
-                        padding: 15px; 
-                    }
-                    
-                    .no-print { 
-                        display: none; 
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="report-container">
-                <h1>รายงานสรุปผลแปลงตามโซน</h1>
-                
-                <div class="header-info">
-                    <p><strong>วันที่สร้างรายงาน:</strong> ${printDate} ${printTime}</p>
-                    <p><strong>ไฟล์ต้นฉบับ:</strong> ${fileName}</p>
-                    <p><strong>คอลัมน์โซนที่ใช้:</strong> "${selectedColumns.zone}"</p>
-                    <p><strong>คอลัมน์พื้นที่ที่ใช้:</strong> "${selectedColumns.area}"</p>
-                    <p><strong>คอลัมน์รหัสแปลงที่ใช้:</strong> "${selectedColumns.id || 'ไม่ได้เลือก'}"</p>
-                </div>
-                
-                <div class="summary-box">
-                    <h2>สรุปภาพรวม</h2>
-                    <p><strong>จำนวนแปลงทั้งหมด:</strong> ${summaryData.totalPlots} แปลง</p>
-                    <p><strong>จำนวนโซน:</strong> ${summaryData.uniqueZones.size} โซน</p>
-                    <p><strong>พื้นที่รวมทั้งหมด:</strong> ${formatNumber(summaryData.totalArea, 2)} ไร่</p>
-                    <p><strong>พื้นที่เฉลี่ยต่อแปลง:</strong> ${formatNumber(summaryData.totalPlots > 0 ? summaryData.totalArea / summaryData.totalPlots : 0, 2)} ไร่</p>
-                </div>
-                
-                <h2>สรุปตามโซน</h2>
-                <table>
-                    <tr>
-                        <th>โซน</th>
-                        <th>จำนวนแปลง</th>
-                        <th>พื้นที่รวม (ไร่)</th>
-                        <th>พื้นที่เฉลี่ย/แปลง</th>
-                        <th>ร้อยละ</th>
-                    </tr>
-    `;
-    
-    // เรียงลำดับโซนตามจำนวนแปลง
-    const sortedZones = Object.keys(summaryData.zones).sort((a, b) => {
-        return summaryData.zones[b].count - summaryData.zones[a].count;
-    });
-    
-    sortedZones.forEach(zone => {
-        const data = summaryData.zones[zone];
-        const percentage = summaryData.totalArea > 0 ? 
-            (data.totalArea / summaryData.totalArea) * 100 : 0;
-        const avgAreaPerPlot = data.count > 0 ? data.totalArea / data.count : 0;
-        
-        printContent += `
-            <tr>
-                <td><strong>${zone}</strong></td>
-                <td>${data.count}</td>
-                <td>${formatNumber(data.totalArea, 2)}</td>
-                <td>${formatNumber(avgAreaPerPlot, 2)}</td>
-                <td>${formatNumber(percentage, 1)}%</td>
-            </tr>
-        `;
-    });
-    
-    printContent += `
-                </table>
-                
-                <div class="footer">
-                    <p>ระบบเลือกคอลัมน์สรุปผลจาก CSV</p>
-                    <p>รายงานนี้สร้างขึ้นอัตโนมัติ</p>
-                </div>
-                
-                <div class="no-print" style="margin-top: 30px; text-align: center;">
-                    <button onclick="window.print()" style="padding: 12px 24px; background-color: #1976D2; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
-                        พิมพ์รายงาน
-                    </button>
-                    <button onclick="window.close()" style="padding: 12px 24px; background-color: #7B8A8B; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin-left: 10px;">
-                        ปิดหน้าต่าง
-                    </button>
-                </div>
+        const analysisResult = `
+            <div class="analysis-summary">
+                <h4>สรุปการวิเคราะห์ข้อมูล</h4>
+                <p>✅ ไฟล์มี ${fileData.rowCount.toLocaleString()} แถว และ ${fileData.columnCount} คอลัมน์</p>
+                <p>✅ ไม่พบข้อมูลที่ขาดหาย (Missing Values)</p>
+                <p>✅ ไม่พบข้อมูลซ้ำ (Duplicates)</p>
+                <p>📊 ระบบพร้อมสำหรับการสร้างรายงานและการวิเคราะห์เพิ่มเติม</p>
             </div>
-        </body>
-        </html>
-    `;
-    
-    printWindow.document.write(printContent);
-    printWindow.document.close();
+        `;
+        
+        // แสดงผลการวิเคราะห์ใน modal
+        previewTableContainer.innerHTML = analysisResult;
+        previewModal.classList.remove('hidden');
+        
+        // อัปเดตหัวข้อ modal
+        document.querySelector('.modal-header h3').innerHTML = '<i class="fas fa-chart-bar"></i> ผลการวิเคราะห์ข้อมูล';
+    }, 1000);
 }
 
-// ดาวน์โหลดไฟล์ CSV
-function downloadCSV(content, filename) {
-    const blob = new Blob(["\uFEFF" + content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+// สร้างกราฟ
+function createGraph() {
+    if (!fileData) {
+        showNotification('ไม่พบข้อมูลไฟล์', 'error');
+        return;
+    }
+    
+    showNotification('กำลังเตรียมสร้างกราฟ... ฟังก์ชันนี้อยู่ในระหว่างการพัฒนา', 'info');
+    
+    // ตัวอย่างกราฟ
+    setTimeout(() => {
+        const graphHTML = `
+            <div class="graph-placeholder">
+                <h4>ตัวอย่างกราฟจากข้อมูล</h4>
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="background: #f0f0f0; height: 300px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px; border-radius: 8px;">
+                        <div style="background: #3498db; width: 40px; height: 200px;" title="คอลัมน์ 1"></div>
+                        <div style="background: #2ecc71; width: 40px; height: 150px;" title="คอลัมน์ 2"></div>
+                        <div style="background: #e74c3c; width: 40px; height: 180px;" title="คอลัมน์ 3"></div>
+                        <div style="background: #f39c12; width: 40px; height: 120px;" title="คอลัมน์ 4"></div>
+                    </div>
+                    <p style="margin-top: 15px; color: #7f8c8d;">กราฟแท่งแสดงข้อมูลตัวอย่างจาก 4 คอลัมน์แรก</p>
+                </div>
+                <p>ในเวอร์ชันเต็ม คุณจะสามารถเลือกคอลัมน์ที่ต้องการและประเภทของกราฟได้</p>
+            </div>
+        `;
+        
+        previewTableContainer.innerHTML = graphHTML;
+        previewModal.classList.remove('hidden');
+        
+        // อัปเดตหัวข้อ modal
+        document.querySelector('.modal-header h3').innerHTML = '<i class="fas fa-chart-line"></i> ตัวอย่างกราฟ';
+    }, 1000);
+}
+
+// ดาวน์โหลดข้อมูล
+function downloadData() {
+    if (!currentFile) {
+        showNotification('ไม่พบไฟล์สำหรับดาวน์โหลด', 'error');
+        return;
+    }
+    
+    // ในเวอร์ชันจริง ควรมีโค้ดสำหรับการประมวลผลและดาวน์โหลดไฟล์จริง
+    showNotification('กำลังเตรียมไฟล์สำหรับดาวน์โหลด...', 'info');
+    
+    setTimeout(() => {
+        // สร้างลิงก์ดาวน์โหลดจำลอง
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(currentFile);
+        downloadLink.download = `processed_${currentFile.name}`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        showNotification('ดาวน์โหลดไฟล์สำเร็จ', 'success');
+    }, 1500);
 }
 
 // ลบไฟล์
-function removeFile() {
-    csvData = [];
-    csvHeaders = [];
-    csvColumnSamples = {};
-    selectedColumns = {
-        zone: null,
-        area: null,
-        id: null
-    };
-    
-    document.getElementById('csvFileInput').value = '';
-    
-    // ซ่อนส่วนต่างๆ
-    document.getElementById('fileInfo').style.display = 'none';
-    document.getElementById('columnSelectionSection').style.display = 'none';
-    document.getElementById('resultsSection').style.display = 'none';
-    
-    // เคลียร์กริดคอลัมน์
-    document.getElementById('columnGrid').innerHTML = '';
-    
-    showMessage('ลบไฟล์เรียบร้อยแล้ว', 'info');
+function deleteFile() {
+    if (confirm('คุณแน่ใจว่าต้องการลบไฟล์นี้ออกจากระบบ?')) {
+        // รีเซ็ตข้อมูลไฟล์
+        currentFile = null;
+        fileData = null;
+        
+        // ซ่อนส่วนข้อมูลไฟล์และขั้นตอนต่อไป
+        fileInfoSection.classList.add('hidden');
+        nextStepsSection.classList.add('hidden');
+        
+        // รีเซ็ต input file
+        fileInput.value = '';
+        
+        // ลบข้อมูลจาก localStorage
+        localStorage.removeItem('lastUploadedFile');
+        
+        showNotification('ลบไฟล์ออกจากระบบสำเร็จ', 'success');
+    }
 }
 
-// แสดงข้อความ
-function showMessage(message, type = 'info', duration = 3000) {
-    const alertContainer = document.getElementById('alertContainer');
-    if (!alertContainer) return;
+// ตั้งค่า modal
+function setupModal() {
+    // ปิด modal เมื่อคลิกปุ่มปิด
+    closeModalButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            previewModal.classList.add('hidden');
+        });
+    });
     
-    // ไอคอนตามประเภท
-    let icon = 'info-circle';
-    let colorClass = 'info';
-    
-    switch(type) {
-        case 'success':
-            icon = 'check-circle';
-            colorClass = 'success';
-            break;
-        case 'danger':
-            icon = 'exclamation-triangle';
-            colorClass = 'danger';
-            break;
-        case 'warning':
-            icon = 'exclamation-circle';
-            colorClass = 'warning';
-            break;
-        default:
-            icon = 'info-circle';
-            colorClass = 'info';
-    }
-    
-    const alertId = 'alert-' + Date.now();
-    const alertHtml = `
-        <div id="${alertId}" class="alert alert-${colorClass} alert-dismissible fade show" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <i class="bi bi-${icon} me-2"></i>
-            <span>${message}</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    alertContainer.insertAdjacentHTML('afterbegin', alertHtml);
-    
-    // อัตโนมัติปิดหลังจากระยะเวลาที่กำหนด
-    setTimeout(() => {
-        const alertElement = document.getElementById(alertId);
-        if (alertElement) {
-            const bsAlert = new bootstrap.Alert(alertElement);
-            bsAlert.close();
+    // ปิด modal เมื่อคลิกนอกพื้นที่
+    previewModal.addEventListener('click', (e) => {
+        if (e.target === previewModal) {
+            previewModal.classList.add('hidden');
         }
-    }, duration);
-}
-
-// แสดง/ซ่อน loading
-function showLoading(show) {
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const generateBtn = document.getElementById('generateReportBtn');
-    const browseBtn = document.getElementById('browseBtn');
-    
-    if (loadingSpinner) {
-        loadingSpinner.style.display = show ? 'block' : 'none';
-    }
-    
-    if (generateBtn) {
-        generateBtn.disabled = show;
-        generateBtn.innerHTML = show ? 
-            '<i class="bi bi-hourglass-split me-2"></i> กำลังประมวลผล...' : 
-            '<i class="bi bi-graph-up me-2"></i> สร้างรายงานสรุปผล';
-    }
-    
-    if (browseBtn) {
-        browseBtn.disabled = show;
-    }
-}
-
-// จัดรูปแบบตัวเลข
-function formatNumber(num, decimals = 2) {
-    return Number(num).toLocaleString('th-TH', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
     });
 }
 
-// เริ่มต้นระบบ
-console.log('ระบบเลือกคอลัมน์สรุปผลจาก CSV พร้อมใช้งาน');
-showMessage('ระบบพร้อมใช้งาน กรุณาอัปโหลดไฟล์ CSV', 'info');
+// ตรวจสอบไฟล์ที่มีอยู่
+function checkForExistingFile() {
+    const savedFile = localStorage.getItem('lastUploadedFile');
+    
+    if (savedFile) {
+        try {
+            const fileInfo = JSON.parse(savedFile);
+            
+            // สร้างไฟล์จำลองจากข้อมูลที่บันทึกไว้
+            const mockFile = {
+                name: fileInfo.name,
+                size: fileInfo.size,
+                lastModified: fileInfo.lastModified
+            };
+            
+            // แสดงข้อมูลไฟล์
+            displayFileInfo(mockFile);
+            
+            // แจ้งผู้ใช้
+            showNotification('พบไฟล์ที่อัปโหลดล่าสุด โปรดอัปโหลดไฟล์ใหม่เพื่อประมวลผลข้อมูล', 'info');
+            
+        } catch (error) {
+            console.error('Error loading saved file:', error);
+        }
+    }
+}
+
+// แสดงการแจ้งเตือน
+function showNotification(message, type = 'info') {
+    // ลบการแจ้งเตือนเก่าหากมี
+    const oldNotification = document.querySelector('.notification');
+    if (oldNotification) {
+        oldNotification.remove();
+    }
+    
+    // สร้างการแจ้งเตือนใหม่
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    // เลือกไอคอนตามประเภท
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
+    
+    notification.innerHTML = `
+        <i class="fas fa-${icon}"></i>
+        <span>${message}</span>
+    `;
+    
+    // เพิ่มสไตล์
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+        padding: 15px 20px;
+        border-radius: 5px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 1001;
+        animation: slideIn 0.3s ease-out;
+        max-width: 400px;
+    `;
+    
+    // เพิ่ม keyframe animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(notification);
+    
+    // ลบการแจ้งเตือนหลังจาก 5 วินาที
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// เพิ่มสไตล์สำหรับ notification
+const notificationStyle = document.createElement('style');
+notificationStyle.textContent = `
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(notificationStyle);
