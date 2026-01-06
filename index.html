@@ -3,787 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเลือกคอลัมน์สรุปผลจาก CSV</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <style>
-        :root {
-            --primary-blue: #4A90E2;
-            --light-blue: #E3F2FD;
-            --medium-blue: #64B5F6;
-            --dark-blue: #1976D2;
-            --accent-blue: #90CAF9;
-            --pastel-green: #A5D6A7;
-            --pastel-orange: #FFCC80;
-            --pastel-pink: #F8BBD0;
-            --text-dark: #2C3E50;
-            --text-light: #7B8A8B;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #F5F7FA 0%, #E3F2FD 100%);
-            font-family: 'Sarabun', 'Kanit', sans-serif;
-            color: var(--text-dark);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1400px;
-        }
-        
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-            color: white;
-            border-radius: 20px;
-            padding: 40px 30px;
-            margin: 30px auto;
-            box-shadow: 0 10px 30px rgba(74, 144, 226, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        
-        /* Upload Area */
-        .upload-area {
-            border: 3px dashed var(--medium-blue);
-            border-radius: 20px;
-            padding: 50px 30px;
-            text-align: center;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        .upload-area:hover {
-            background-color: rgba(227, 242, 253, 0.3);
-            border-color: var(--dark-blue);
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(100, 181, 246, 0.15);
-        }
-        
-        .upload-area.dragover {
-            background-color: rgba(144, 202, 249, 0.2);
-            border-color: var(--dark-blue);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(25, 118, 210, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0); }
-        }
-        
-        .upload-icon {
-            font-size: 4rem;
-            color: var(--dark-blue);
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-        
-        .upload-area:hover .upload-icon {
-            transform: scale(1.1);
-        }
-        
-        /* Cards */
-        .card {
-            border-radius: 18px;
-            border: none;
-            background: white;
-            box-shadow: 0 8px 25px rgba(144, 202, 249, 0.1);
-            margin-bottom: 25px;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(144, 202, 249, 0.2);
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, var(--light-blue) 0%, var(--accent-blue) 100%);
-            color: var(--text-dark);
-            font-weight: 600;
-            border-radius: 18px 18px 0 0 !important;
-            padding: 18px 25px;
-            font-size: 1.1rem;
-            border: none;
-        }
-        
-        /* Buttons */
-        .btn-primary {
-            background: linear-gradient(135deg, var(--medium-blue) 0%, var(--dark-blue) 100%);
-            border: none;
-            padding: 12px 30px;
-            font-weight: 500;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(100, 181, 246, 0.3);
-            background: linear-gradient(135deg, var(--dark-blue) 0%, #1565C0 100%);
-            color: white;
-        }
-        
-        .btn-outline-primary {
-            color: var(--dark-blue);
-            border-color: var(--dark-blue);
-            border-radius: 12px;
-            padding: 10px 25px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: var(--dark-blue);
-            border-color: var(--dark-blue);
-            transform: translateY(-3px);
-            color: white;
-        }
-        
-        /* Statistics Cards */
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 25px 20px;
-            text-align: center;
-            box-shadow: 0 6px 20px rgba(144, 202, 249, 0.1);
-            height: 100%;
-            border: 2px solid var(--light-blue);
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 25px rgba(144, 202, 249, 0.2);
-            border-color: var(--medium-blue);
-        }
-        
-        .stat-icon {
-            font-size: 2.5rem;
-            color: var(--dark-blue);
-            margin-bottom: 15px;
-            opacity: 0.8;
-        }
-        
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 0.95rem;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 500;
-        }
-        
-        /* Column Selection */
-        .column-selection-container {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin-top: 25px;
-            border: 2px solid var(--light-blue);
-        }
-        
-        .column-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .column-card {
-            background: #F8FBFF;
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid #E3F2FD;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .column-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(144, 202, 249, 0.15);
-            border-color: var(--accent-blue);
-        }
-        
-        .column-card.selected {
-            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-            border-color: var(--pastel-green);
-        }
-        
-        .column-card.zone-selected {
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            border-color: var(--primary-blue);
-        }
-        
-        .column-card.area-selected {
-            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-            border-color: var(--pastel-orange);
-        }
-        
-        .column-card.id-selected {
-            background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%);
-            border-color: var(--pastel-pink);
-        }
-        
-        .column-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-        
-        .column-name {
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 1rem;
-            word-break: break-word;
-        }
-        
-        .column-badge {
-            font-size: 0.75rem;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: 500;
-            background: var(--light-blue);
-            color: var(--dark-blue);
-        }
-        
-        .column-preview {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            max-height: 100px;
-            overflow-y: auto;
-            border: 1px solid #E3F2FD;
-        }
-        
-        .column-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .action-btn {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-        
-        .action-btn.zone-btn {
-            background: var(--primary-blue);
-            color: white;
-        }
-        
-        .action-btn.area-btn {
-            background: var(--pastel-orange);
-            color: var(--text-dark);
-        }
-        
-        .action-btn.id-btn {
-            background: var(--pastel-pink);
-            color: var(--text-dark);
-        }
-        
-        .action-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-        
-        /* Selected Columns Display */
-        .selected-columns-display {
-            background: linear-gradient(135deg, #F5F7FA 0%, #E3F2FD 100%);
-            border-radius: 16px;
-            padding: 25px;
-            margin-top: 25px;
-            border: 2px dashed var(--medium-blue);
-        }
-        
-        .selected-column-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary-blue);
-            box-shadow: 0 3px 10px rgba(144, 202, 249, 0.1);
-        }
-        
-        /* Tables */
-        .table-custom {
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(144, 202, 249, 0.1);
-            background: white;
-        }
-        
-        .table-custom thead {
-            background: linear-gradient(135deg, var(--light-blue) 0%, var(--accent-blue) 100%);
-            color: var(--text-dark);
-        }
-        
-        .table-custom th {
-            border: none;
-            padding: 16px;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        
-        .table-custom td {
-            padding: 14px 16px;
-            vertical-align: middle;
-            border-bottom: 1px solid #E3F2FD;
-        }
-        
-        /* Progress Bars */
-        .progress-custom {
-            height: 10px;
-            border-radius: 10px;
-            background-color: #E3F2FD;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-        
-        .progress-bar-custom {
-            background: linear-gradient(90deg, var(--medium-blue) 0%, var(--dark-blue) 100%);
-            border-radius: 10px;
-            transition: width 1s ease-in-out;
-        }
-        
-        /* Zone Badges */
-        .zone-badge {
-            font-size: 0.85rem;
-            padding: 7px 15px;
-            border-radius: 20px;
-            font-weight: 500;
-            background: linear-gradient(135deg, var(--light-blue) 0%, var(--accent-blue) 100%);
-            color: var(--text-dark);
-            border: none;
-        }
-        
-        /* File Info */
-        .file-info {
-            background: linear-gradient(135deg, rgba(165, 214, 167, 0.2) 0%, rgba(227, 242, 253, 0.3) 100%);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 25px;
-            border: 1px solid var(--pastel-green);
-        }
-        
-        /* Loading Animation */
-        .loading-spinner {
-            display: none;
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(144, 202, 249, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--dark-blue);
-            animation: spin 1s ease-in-out infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 25px;
-            color: var(--text-light);
-            margin-top: 50px;
-            background: white;
-            border-radius: 20px;
-            border-top: 1px solid var(--light-blue);
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header {
-                padding: 30px 20px;
-                margin: 20px auto;
-            }
-            
-            .upload-area {
-                padding: 30px 20px;
-            }
-            
-            .column-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .stat-value {
-                font-size: 1.8rem;
-            }
-        }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>ระบบอัปโหลดและวิเคราะห์ไฟล์ CSV</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container py-4">
-        <!-- Alert Container -->
-        <div id="alertContainer"></div>
-        
-        <!-- Header -->
-        <div class="header text-center">
-            <h1 class="mb-3"><i class="bi bi-file-earmark-spreadsheet-fill"></i> ระบบเลือกคอลัมน์สรุปผลจาก CSV</h1>
-            <p class="lead mb-0">อัปโหลดไฟล์ CSV และเลือกคอลัมน์ที่ต้องการสำหรับสรุปผล</p>
-        </div>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-file-csv"></i> ระบบอัปโหลดและวิเคราะห์ไฟล์ CSV</h1>
+            <p class="subtitle">อัปโหลดไฟล์ CSV ของคุณเพื่อวิเคราะห์ข้อมูลและสร้างรายงาน</p>
+        </header>
 
-        <!-- Upload Section -->
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-upload"></i> ขั้นตอนที่ 1: อัปโหลดไฟล์ CSV
-            </div>
-            <div class="card-body">
-                <!-- Upload Area -->
-                <div class="upload-area" id="uploadArea">
+        <main>
+            <!-- ส่วนอัปโหลดไฟล์ -->
+            <section id="upload-section" class="card">
+                <h2><i class="fas fa-cloud-upload-alt"></i> อัปโหลดไฟล์ CSV</h2>
+                
+                <div class="upload-area" id="drop-area">
                     <div class="upload-icon">
-                        <i class="bi bi-cloud-arrow-up"></i>
+                        <i class="fas fa-file-upload"></i>
                     </div>
-                    <h4 class="mb-3" style="color: var(--text-dark);">ลากไฟล์ CSV มาวางที่นี่</h4>
-                    <p class="text-muted mb-4">หรือคลิกปุ่มด้านล่างเพื่อเลือกไฟล์จากคอมพิวเตอร์</p>
+                    <h3>ลากไฟล์ CSV มาวางที่นี่</h3>
+                    <p>หรือคลิกปุ่มด้านล่างเพื่อเลือกไฟล์จากคอมพิวเตอร์</p>
                     
-                    <div class="mb-4">
-                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-                        <button class="btn btn-primary btn-lg" id="browseBtn">
-                            <i class="bi bi-folder2-open me-2"></i> เลือกไฟล์ CSV
-                        </button>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file-input" accept=".csv" hidden>
+                        <label for="file-input" class="btn btn-primary">
+                            <i class="fas fa-folder-open"></i> เลือกไฟล์ CSV
+                        </label>
                     </div>
                     
-                    <div class="loading-spinner" id="loadingSpinner"></div>
-                    
-                    <p class="small text-muted mt-4">
-                        <i class="bi bi-info-circle me-1"></i>
-                        รองรับไฟล์ .csv เท่านั้น (ขนาดไม่เกิน 10MB)
+                    <p class="file-info">
+                        <i class="fas fa-info-circle"></i> รองรับเฉพาะไฟล์ .csv (ขนาดไม่เกิน 10MB)
                     </p>
                 </div>
+            </section>
 
-                <!-- File Info -->
-                <div id="fileInfo" class="file-info" style="display: none;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1" id="fileName" style="color: var(--text-dark);">
-                                <i class="bi bi-file-earmark-text me-2"></i>ไม่พบไฟล์
-                            </h6>
-                            <p class="mb-0 small text-muted" id="fileDetails">
-                                <i class="bi bi-table me-1"></i>คอลัมน์: - 
-                                <i class="bi bi-list-ul ms-3 me-1"></i>แถว: - 
-                            </p>
+            <!-- ส่วนแสดงสถานะไฟล์ -->
+            <section id="file-info-section" class="card hidden">
+                <h2><i class="fas fa-file-alt"></i> ไฟล์ที่อัปโหลดแล้ว</h2>
+                
+                <div class="file-details">
+                    <div class="file-header">
+                        <i class="fas fa-file-csv"></i>
+                        <h3 id="file-name">CSV_กรองแล้ว_20260106_1341.csv</h3>
+                        <span class="status-badge success">
+                            <i class="fas fa-check-circle"></i> อัปโหลดสำเร็จ
+                        </span>
+                    </div>
+                    
+                    <div class="file-stats">
+                        <div class="stat">
+                            <i class="fas fa-columns"></i>
+                            <span id="column-count">14</span> คอลัมน์
                         </div>
-                        <div>
-                            <button class="btn btn-outline-danger btn-sm" id="removeFileBtn">
-                                <i class="bi bi-trash me-1"></i> ลบไฟล์
-                            </button>
+                        <div class="stat">
+                            <i class="fas fa-list"></i>
+                            <span id="row-count">28,163</span> แถว
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-database"></i>
+                            <span id="file-size">3.2</span> MB
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Column Selection Section -->
-        <div id="columnSelectionSection" class="card" style="display: none;">
-            <div class="card-header">
-                <i class="bi bi-gear"></i> ขั้นตอนที่ 2: เลือกคอลัมน์สำหรับสรุปผล
-            </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-8">
-                        <h5 class="mb-3" style="color: var(--text-dark);">
-                            <i class="bi bi-list-check me-2"></i> คอลัมน์ทั้งหมดจากไฟล์
-                        </h5>
-                        <p class="text-muted mb-0">เลือกคอลัมน์ที่ต้องการใช้งานโดยคลิกที่ปุ่มด้านล่างแต่ละคอลัมน์</p>
+            <!-- ส่วนขั้นตอนต่อไป -->
+            <section id="next-steps-section" class="card hidden">
+                <h2><i class="fas fa-play-circle"></i> ขั้นตอนต่อไป</h2>
+                <p class="section-subtitle">เลือกอย่างใดอย่างหนึ่งเพื่อดำเนินการกับข้อมูลของคุณ</p>
+                
+                <div class="action-grid">
+                    <div class="action-card" data-action="preview">
+                        <div class="action-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3>ดูตัวอย่างข้อมูล</h3>
+                        <p>แสดง 10 แถวแรกของข้อมูล</p>
                     </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-outline-primary" id="clearSelectionsBtn">
-                            <i class="bi bi-x-circle me-2"></i> ล้างการเลือกทั้งหมด
-                        </button>
+                    
+                    <div class="action-card" data-action="analyze">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3>วิเคราะห์ข้อมูล</h3>
+                        <p>ดูสถิติพื้นฐานของแต่ละคอลัมน์</p>
+                    </div>
+                    
+                    <div class="action-card" data-action="graph">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>สร้างกราฟ</h3>
+                        <p>เลือกคอลัมน์เพื่อแสดงแผนภูมิ</p>
+                    </div>
+                    
+                    <div class="action-card" data-action="download">
+                        <div class="action-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h3>ดาวน์โหลดผลลัพธ์</h3>
+                        <p>บันทึกเป็นไฟล์ใหม่</p>
+                    </div>
+                    
+                    <div class="action-card" data-action="delete">
+                        <div class="action-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <h3>ลบไฟล์นี้</h3>
+                        <p>ลบออกจากระบบ</p>
                     </div>
                 </div>
                 
-                <div class="column-grid" id="columnGrid">
-                    <!-- Columns will be loaded here -->
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="preview-btn">
+                        <i class="fas fa-eye"></i> ดูตัวอย่าง
+                    </button>
+                    <button class="btn btn-secondary" id="analyze-btn">
+                        <i class="fas fa-chart-bar"></i> วิเคราะห์
+                    </button>
+                    <button class="btn btn-secondary" id="graph-btn">
+                        <i class="fas fa-chart-line"></i> สร้างกราฟ
+                    </button>
+                    <button class="btn btn-secondary" id="download-btn">
+                        <i class="fas fa-download"></i> ดาวน์โหลด
+                    </button>
+                    <button class="btn btn-danger" id="delete-btn">
+                        <i class="fas fa-trash-alt"></i> ลบไฟล์
+                    </button>
                 </div>
-                
-                <!-- Selected Columns Display -->
-                <div id="selectedColumnsDisplay" class="selected-columns-display" style="display: none;">
-                    <h5 class="mb-3" style="color: var(--text-dark);">
-                        <i class="bi bi-check-circle me-2"></i> คอลัมน์ที่เลือกแล้ว
-                    </h5>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="selected-column-item">
-                                <div>
-                                    <strong>คอลัมน์โซน:</strong><br>
-                                    <span class="text-muted" id="selectedZoneColumn">ยังไม่ได้เลือก</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="selected-column-item">
-                                <div>
-                                    <strong>คอลัมน์พื้นที่ (ไร่):</strong><br>
-                                    <span class="text-muted" id="selectedAreaColumn">ยังไม่ได้เลือก</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="selected-column-item">
-                                <div>
-                                    <strong>คอลัมน์รหัสแปลง:</strong><br>
-                                    <span class="text-muted" id="selectedIdColumn">ยังไม่ได้เลือก</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-3" style="background-color: var(--light-blue); border: none;">
-                        <h6><i class="bi bi-lightbulb me-2"></i> คำแนะนำ</h6>
-                        <p class="mb-0 small">
-                            • <strong>คอลัมน์โซน:</strong> ใช้สำหรับจัดกลุ่มข้อมูลแปลง<br>
-                            • <strong>คอลัมน์พื้นที่:</strong> ควรเป็นข้อมูลพื้นที่ในหน่วยไร่<br>
-                            • <strong>คอลัมน์รหัสแปลง:</strong> ใช้สำหรับระบุแปลง (ไม่บังคับ)
-                        </p>
-                    </div>
-                    
-                    <div class="text-center mt-4">
-                        <button class="btn btn-primary btn-lg px-5" id="generateReportBtn">
-                            <i class="bi bi-graph-up me-2"></i> สร้างรายงานสรุปผล
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Results Section -->
-        <div id="resultsSection" class="card" style="display: none;">
-            <div class="card-header">
-                <i class="bi bi-bar-chart"></i> ขั้นตอนที่ 3: ผลลัพธ์สรุปผล
-            </div>
-            <div class="card-body">
-                <!-- Summary Statistics -->
-                <div class="row mb-4">
-                    <div class="col-md-3 mb-4">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-grid-3x3-gap"></i>
-                            </div>
-                            <div class="stat-value" id="totalPlots">0</div>
-                            <div class="stat-label">จำนวนแปลงทั้งหมด</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-4">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-map"></i>
-                            </div>
-                            <div class="stat-value" id="totalZones">0</div>
-                            <div class="stat-label">จำนวนโซน</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-4">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-square"></i>
-                            </div>
-                            <div class="stat-value" id="totalArea">0</div>
-                            <div class="stat-label">พื้นที่รวม (ไร่)</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-4">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-graph-up"></i>
-                            </div>
-                            <div class="stat-value" id="avgArea">0</div>
-                            <div class="stat-label">พื้นที่เฉลี่ย/แปลง</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Results Tabs -->
-                <ul class="nav nav-tabs mb-4" id="resultsTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="zone-tab" data-bs-toggle="tab" data-bs-target="#zone" type="button">
-                            <i class="bi bi-pie-chart me-2"></i> สรุปตามโซน
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots" type="button">
-                            <i class="bi bi-table me-2"></i> รายการแปลง
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button">
-                            <i class="bi bi-download me-2"></i> ส่งออก
-                        </button>
-                    </li>
+            <!-- ส่วนคำแนะนำ -->
+            <section id="help-section" class="card">
+                <h2><i class="fas fa-question-circle"></i> คำแนะนำเพิ่มเติม</h2>
+                <ul class="tips">
+                    <li><i class="fas fa-check"></i> ระบบจะประมวลผลอัตโนมัติเมื่ออัปโหลดไฟล์สำเร็จ</li>
+                    <li><i class="fas fa-check"></i> สามารถคลิกที่ชื่อไฟล์เพื่อดูรายละเอียดเพิ่มเติม</li>
+                    <li><i class="fas fa-check"></i> หากไม่เห็นปุ่มใดปุ่มหนึ่ง โปรดรีเฟรชหน้าจอหรือลองอัปโหลดไฟล์อีกครั้ง</li>
+                    <li><i class="fas fa-check"></i> ระบบรองรับไฟล์ CSV ที่มีอักขระไทยและภาษาอังกฤษ</li>
+                    <li><i class="fas fa-check"></i> คุณสามารถลากไฟล์มาวางได้จาก Explorer หรือ Finder</li>
                 </ul>
-                
-                <div class="tab-content" id="resultsTabContent">
-                    <!-- Zone Summary Tab -->
-                    <div class="tab-pane fade show active" id="zone" role="tabpanel">
-                        <div class="table-responsive">
-                            <table class="table table-custom table-hover mb-0" id="zoneSummaryTable">
-                                <thead>
-                                    <tr>
-                                        <th>โซน</th>
-                                        <th>จำนวนแปลง</th>
-                                        <th>พื้นที่รวม (ไร่)</th>
-                                        <th>พื้นที่เฉลี่ย/แปลง</th>
-                                        <th>สัดส่วนพื้นที่</th>
-                                        <th>%</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Zone summary will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Plots List Tab -->
-                    <div class="tab-pane fade" id="plots" role="tabpanel">
-                        <div class="row mb-3">
-                            <div class="col-md-6 mb-3">
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background-color: var(--light-blue);">
-                                        <i class="bi bi-search"></i>
-                                    </span>
-                                    <input type="text" class="form-control" id="searchPlot" placeholder="ค้นหาจากรหัสแปลงหรือโซน...">
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <select class="form-select" id="filterZone">
-                                    <option value="">ทั้งหมด (โซน)</option>
-                                    <!-- Zone options will be populated -->
-                                </select>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <button class="btn btn-outline-secondary w-100" id="resetFilterBtn">
-                                    <i class="bi bi-arrow-clockwise me-2"></i> รีเซ็ต
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-custom table-hover mb-0" id="plotsTable">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>รหัสแปลง</th>
-                                        <th>โซน</th>
-                                        <th>พื้นที่ (ไร่)</th>
-                                        <th>หมายเหตุ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Plots data will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Export Tab -->
-                    <div class="tab-pane fade" id="export" role="tabpanel">
-                        <div class="row">
-                            <div class="col-md-4 mb-4">
-                                <div class="text-center p-4 border rounded" style="background-color: #F8FBFF;">
-                                    <i class="bi bi-file-earmark-spreadsheet display-4 mb-3" style="color: var(--dark-blue);"></i>
-                                    <h5>ดาวน์โหลดสรุปผล</h5>
-                                    <p class="text-muted small mb-3">ไฟล์ CSV สรุปตามโซน</p>
-                                    <button class="btn btn-primary w-100" id="exportSummaryBtn">
-                                        <i class="bi bi-download me-2"></i> ดาวน์โหลด
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-4">
-                                <div class="text-center p-4 border rounded" style="background-color: #F8FBFF;">
-                                    <i class="bi bi-file-earmark-text display-4 mb-3" style="color: var(--dark-blue);"></i>
-                                    <h5>ดาวน์โหลดรายการแปลง</h5>
-                                    <p class="text-muted small mb-3">ไฟล์ CSV รายการแปลงทั้งหมด</p>
-                                    <button class="btn btn-primary w-100" id="exportPlotsBtn">
-                                        <i class="bi bi-download me-2"></i> ดาวน์โหลด
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-4">
-                                <div class="text-center p-4 border rounded" style="background-color: #F8FBFF;">
-                                    <i class="bi bi-printer display-4 mb-3" style="color: var(--dark-blue);"></i>
-                                    <h5>พิมพ์รายงาน</h5>
-                                    <p class="text-muted small mb-3">รูปแบบ PDF/Print</p>
-                                    <button class="btn btn-primary w-100" id="printReportBtn">
-                                        <i class="bi bi-printer me-2"></i> พิมพ์
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-info mt-3" style="background-color: var(--light-blue); border: none;">
-                            <h6><i class="bi bi-info-circle me-2"></i> ข้อมูลสรุปผล</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>คอลัมน์โซนที่ใช้:</strong> <span id="reportZoneColumn">-</span></p>
-                                    <p class="mb-1"><strong>คอลัมน์พื้นที่ที่ใช้:</strong> <span id="reportAreaColumn">-</span></p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>คอลัมน์รหัสแปลงที่ใช้:</strong> <span id="reportIdColumn">-</span></p>
-                                    <p class="mb-1"><strong>จำนวนข้อมูลทั้งหมด:</strong> <span id="reportTotalData">0</span> แถว</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2023 ระบบวิเคราะห์ข้อมูล CSV | พัฒนาด้วย HTML, CSS และ JavaScript</p>
+        </footer>
+    </div>
+
+    <!-- Modal สำหรับแสดงตัวอย่างข้อมูล -->
+    <div id="preview-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-table"></i> ตัวอย่างข้อมูล</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>กำลังโหลดข้อมูล...</p>
+                <div id="preview-table-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal">ปิด</button>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="row">
-            <div class="col-md-6 text-md-start">
-                <h6 class="mb-2">ระบบเลือกคอลัมน์สรุปผลจาก CSV</h6>
-                <p class="mb-0">ออกแบบและพัฒนาโดยทีมงาน</p>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <p class="mb-0">© 2023 All Rights Reserved</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
